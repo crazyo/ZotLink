@@ -1,0 +1,3 @@
+content zotlink chrome/content/
+
+overlay chrome://zotero/content/zoteroPane.xul chrome://zotlink/content/overlay.xul

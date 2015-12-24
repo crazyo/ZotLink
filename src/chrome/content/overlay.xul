@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<overlay id="zotlink-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+    <!-- ZotLink context menu options -->
+    <menupopup id="zotero-itemmenu">
+        <menuseparator id="zotlink-separator"/>
+        <menuitem id="zotlink-create-link" label="Make a Linked Copy of the Current Item..." oncommand="Zotero.ZotLink.promptCreateLink();"/>
+        <menuitem id="zotlink-link-existing" label="Link Another Item to the Current Item..." oncommand="Zotero.ZotLink.promptLinkExisting();"/>
+    </menupopup>
+
+    <!-- gain access to the Zotero object -->
+    <script src="chrome://zotero/content/include.js"/>
+    <!-- kick off our extension -->
+    <script src="chrome://zotlink/content/include.js"/>
+</overlay>
