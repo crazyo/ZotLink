@@ -1,13 +1,43 @@
 <?xml version="1.0"?>
+<?xml-stylesheet href="chrome://zotlink/content/style.css" type="text/css"?>
 <overlay id="zotlink-overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
     <!-- ZotLink context menu options -->
     <menupopup id="zotero-itemmenu">
         <menuseparator id="zotlink-separator"/>
-        <menuitem id="zotlink-create-link" label="Make a Linked Copy of the Current Item..." oncommand="Zotero.ZotLink.promptCreateLink();"/>
-        <menuitem id="zotlink-link-existing" label="Link Another Item to the Current Item..." oncommand="Zotero.ZotLink.promptLinkExisting();"/>
+        <grid>
+            <columns>
+                <column/>
+                <column class="help-container"/>
+            </columns>
+            <rows>
+                <row>
+                    <menuitem id="zotlink-create-link" label="Make a Linked Copy of the Current Item..." oncommand="Zotero.ZotLink.promptCreateLink();"/>
+                    <image class="question-icon help" tooltip="zotlink-create-link-help"/>
+                </row>
+                <row>
+                    <menuitem id="zotlink-link-existing" label="Link Another Item to the Current Item..." oncommand="Zotero.ZotLink.promptLinkExisting();"/>
+                    <image class="question-icon help" tooltip="zotlink-link-existing-help"/>
+                </row>
+            </rows>
+        </grid>
     </menupopup>
+
+    <popupset>
+        <tooltip id="zotlink-create-link-help" class="help-tooltip" orient="horizontal" noautohide="true" crop="end">
+            <description>
+                Create a<description value="duplicate" style="color: red"/>of the current item in the selected "library > collection" and keep them<description value="synced" style="color: red"/>
+            </description>
+        </tooltip>
+    </popupset>
+    <popupset>
+        <tooltip id="zotlink-link-existing-help" class="help-tooltip" orient="horizontal" noautohide="true" crop="end">
+            <description>
+                <description value="Overwrites" style="color: red"/>the target item with the current item and keep them<description value="synced" style="color: red"/>
+            </description>
+        </tooltip>
+    </popupset>
 
     <!-- gain access to the Zotero object -->
     <script src="chrome://zotero/content/include.js"/>
