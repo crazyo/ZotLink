@@ -30,6 +30,27 @@ Zotero.ZotLink = {
         window.addEventListener("unload", function() {
             Zotero.Notifier.unregisterObserver(this.observerID);
         });
+
+        // other event listeners
+
+        // unlink option
+        document.getElementById("zotero-itemmenu").addEventListener("popupshowing", function() {
+            if (ZoteroPane_Local.getSelectedItems().length < 1) {
+                return;
+            }
+
+            // remove this option if multiple items are selected
+            if (ZoteroPane_Local.getSelectedItems().length > 1) {
+                this.removeChild(document.getElementById("zotlink-unlink"));
+                return;
+            }
+
+            // gray out this option if the selected item is not linked to any other item
+            document.getElementById("zotlink-unlink").setAttribute(
+                "disabled",
+                !Zotero.ZotLink.links.findLinks(ZoteroPane_Local.getSelectedItems()[0].id).length ? true : false
+            );
+        });
     },
 
     observer: {
@@ -209,6 +230,28 @@ Zotero.ZotLink = {
 
         // resume listening to events
         this.observerID = Zotero.Notifier.registerObserver(this.observer, ["item"]);
+    },
+
+    promptUnlink: function() {
+        // confirm
+        var confirmed = this.ps.confirm(null,
+                                        "Are You Sure You Want to Continue?",
+                                        "The current item will no longer be linked to any other item!");
+        if (!confirmed) {
+            return;
+        }
+
+        // do the actual job
+        var itemid = ZoteroPane_Local.getSelectedItems()[0].id;
+        this.unlinkItem(itemid);
+    },
+
+    unlinkItem: function(itemid) {
+        // update db
+        var sql = "DELETE FROM links WHERE item1id=" + itemid + " OR item2id=" + itemid + ";";
+        Zotero.ZotLink.DB.query(sql);
+        // also update the cache to reduce database access
+        Zotero.ZotLink.links.removeLinks(itemid);
     },
 };
 
