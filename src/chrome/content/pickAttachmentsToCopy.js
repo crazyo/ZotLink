@@ -1,7 +1,7 @@
 var ZotLink_Attachments_Picker = new function() {
     // public methods
     this.init = init;
-    // this.accept = accept;
+    this.accept = accept;
     this.selectAll = function() { toggleAllSelectStatus(true) };
     this.deselectAll = function() { toggleAllSelectStatus(false) };
 
@@ -23,8 +23,20 @@ var ZotLink_Attachments_Picker = new function() {
             row.setAttribute("checked", true);
             row.setAttribute("label", attachment.getDisplayTitle());
             row.setAttribute("tooltiptext", attachment.getDisplayTitle());
+            row.setAttribute("value", attachment.id);
             document.getElementById("attachments-pool").appendChild(row);
         }
+    }
+
+    function accept() {
+        var selected = [];
+        var all = document.getElementById("attachments-pool").children;
+        for (var i = 0; i < all.length; i++) {
+            if (all[i].checked) {
+                selected.push(all[i].value);
+            }
+        }
+        console.log(selected);
     }
 
     function toggleAllSelectStatus(selected) {
