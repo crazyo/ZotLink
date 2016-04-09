@@ -5,6 +5,7 @@
 
     <!-- ZotLink context menu options -->
     <menupopup id="zotero-itemmenu">
+    <vbox id="zotlink-itemmenu">
         <menuseparator id="zotlink-separator"/>
         <grid>
             <columns>
@@ -23,6 +24,8 @@
             </rows>
         </grid>
         <menuitem id="zotlink-unlink" label="Remove All Links to the Current Item..." oncommand="Zotero.ZotLink.promptUnlink();"/>
+        <menuitem hidden="false" id="__dev__" label="__dev__" oncommand="Zotero.ZotLink.__dev__();"/>
+    </vbox>
     </menupopup>
 
     <popupset>

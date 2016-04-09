@@ -33,23 +33,44 @@ Zotero.ZotLink = {
 
         // other event listeners
 
-        // unlink option
+        // item-menu pop-up showing
         document.getElementById("zotero-itemmenu").addEventListener("popupshowing", function() {
-            if (ZoteroPane_Local.getSelectedItems().length < 1) {
+
+            var selectedItems = ZoteroPane_Local.getSelectedItems();
+
+            /***********************************
+             * visibility of zotlink item menu *
+             ***********************************/
+            document.getElementById("zotlink-itemmenu").hidden = false;
+            // do not display zotlink item menu if no item is selected
+            if (selectedItems.length < 1) {
+                document.getElementById("zotlink-itemmenu").hidden = true;
                 return;
             }
 
+            // do not display zotlink item menu if at least one of the selected items is attachment
+            for (var i = 0; i < selectedItems.length; i++) {
+                if (selectedItems[i].isAttachment()) {
+                    document.getElementById("zotlink-itemmenu").hidden = true;
+                    return;
+                }
+            }
+
+            /*****************
+             * unlink option *
+             *****************/
             // remove this option if multiple items are selected
-            if (ZoteroPane_Local.getSelectedItems().length > 1) {
-                this.removeChild(document.getElementById("zotlink-unlink"));
-                return;
+            if (selectedItems.length > 1) {
+                document.getElementById("zotlink-unlink").hidden = true;
             }
-
-            // gray out this option if the selected item is not linked to any other item
-            document.getElementById("zotlink-unlink").setAttribute(
-                "disabled",
-                !Zotero.ZotLink.links.findLinks(ZoteroPane_Local.getSelectedItems()[0].id).length ? true : false
-            );
+            else {
+                document.getElementById("zotlink-unlink").hidden = false;
+                // gray out this option if the selected item is not linked to any other item
+                document.getElementById("zotlink-unlink").setAttribute(
+                    "disabled",
+                    !Zotero.ZotLink.links.findLinks(selectedItems[0].id).length ? true : false
+                );
+            }
         });
     },
 
@@ -141,6 +162,9 @@ Zotero.ZotLink = {
         // also update the cache to reduce database access
         this.links.addLink([source.id, newItemID]);
 
+        // 3. copy over attachments
+        this.copyAttachments(source.id, newItemID);
+
         // resume listening to events
         this.observerID = Zotero.Notifier.registerObserver(this.observer, ["item"]);
     },
@@ -228,8 +252,23 @@ Zotero.ZotLink = {
         // also update the cache to reduce database access
         this.links.addLink([source.id, target.id]);
 
+        // 4. copy over attachments
+        this.copyAttachments(source.id, target.id);
+
         // resume listening to events
         this.observerID = Zotero.Notifier.registerObserver(this.observer, ["item"]);
+    },
+
+    copyAttachments: function(sourceid, targetid) {
+        console.log("under dev");
+    },
+
+    __dev__ : function() {
+        var io = {item: ZoteroPane_Local.getSelectedItems()[0]};
+        window.openDialog("chrome://zotlink/content/pickAttachmentsToCopy.xul",
+                          "",
+                          "chrome,centerscreen,modal,resizable=no",
+                          io);
     },
 
     promptUnlink: function() {

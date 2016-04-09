@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        id="zotlink-pick-attachments-dialog"
+        title="Select Attachments" buttons="accept"
+        onload="ZotLink_Attachments_Picker.init();"
+        ondialogaccept="ZotLink_Attachments_Picker.accept();"
+        buttonlabelaccept="Done">
+
+    <script src="chrome://zotero/content/include.js"/>
+    <script src="pickAttachmentsToCopy.js"/>
+
+    <dialogheader title="Select Attachments" description="selected attachments will be copied over to the linked item"/>
+    <vbox>
+        <groupbox>
+            <caption label="Current Item"/>
+            <grid>
+                <columns>
+                    <column/>
+                    <column/>
+                </columns>
+                <rows>
+                    <row>
+                        <label value="Name: "/>
+                        <label id="item-name"/>
+                    </row>
+                    <row>
+                        <label value="Type: "/>
+                        <label id="item-type"/>
+                    </row>
+                </rows>
+            </grid>
+        </groupbox>
+        <groupbox>
+            <caption label="Select Attachments"/>
+            <listbox id="attachments-pool" rows="10"/>
+            <hbox id="batch-select-buttons">
+                <button label="Select All" oncommand="ZotLink_Attachments_Picker.selectAll();"/>
+                <button label="Deselect All" oncommand="ZotLink_Attachments_Picker.deselectAll();"/>
+            </hbox>
+        </groupbox>
+    </vbox>
+</dialog>
