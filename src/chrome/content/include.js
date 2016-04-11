@@ -4,3 +4,5 @@ if (!Zotero.ZotLink) {
                            .getService(Components.interfaces.mozIJSSubScriptLoader);
     loader.loadSubScript("chrome://zotlink/content/zotlink.js");
 }
+
+window.addEventListener("load", function() { Zotero.ZotLink.init(); });

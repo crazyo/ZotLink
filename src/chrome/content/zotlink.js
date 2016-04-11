@@ -294,8 +294,6 @@ Zotero.ZotLink = {
     },
 };
 
-window.addEventListener("load", function() { Zotero.ZotLink.init(); });
-
 
 /* implementation of graph data structure where nodes are the items and
  * edges are the links
