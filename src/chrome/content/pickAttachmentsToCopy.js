@@ -20,10 +20,11 @@ var ZotLink_Attachments_Picker = new function() {
             var attachment = attachments[i];
             var row = document.createElement("listitem");
             row.setAttribute("type", "checkbox");
-            row.setAttribute("checked", true);
+            row.setAttribute("checked", attachment.attachmentLinkMode === Zotero.Attachments.LINK_MODE_LINKED_URL ? true : false);
             row.setAttribute("label", attachment.getDisplayTitle());
             row.setAttribute("tooltiptext", attachment.getDisplayTitle());
             row.setAttribute("value", attachment.id);
+            row.setAttribute("disabled", attachment.attachmentLinkMode === Zotero.Attachments.LINK_MODE_LINKED_URL ? false : true);
             document.getElementById("attachments-pool").appendChild(row);
         }
     }
@@ -36,13 +37,13 @@ var ZotLink_Attachments_Picker = new function() {
                 selected.push(all[i].value);
             }
         }
-        console.log(selected);
+        window.arguments[0].out = selected;
     }
 
     function toggleAllSelectStatus(selected) {
         var elements = document.getElementById("attachments-pool").children;
         for (var i = 0; i < elements.length; i++) {
-            elements[i].setAttribute("checked", selected);
+            if (!elements[i].disabled) elements[i].setAttribute("checked", selected);
         }
     }
 };

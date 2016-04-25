@@ -24,7 +24,7 @@ Zotero.ZotLink = {
         this.links = new _LinkGraph(rows);
 
         // start listening to events
-        this.observerID = Zotero.Notifier.registerObserver(this.observer, ["item"]);
+        this.observerID = Zotero.Notifier.registerObserver(this.observer, ["item", "item-tag"]);
 
         // stop listening to events when unloaded
         window.addEventListener("unload", function() {
@@ -36,7 +36,7 @@ Zotero.ZotLink = {
         // item-menu pop-up showing
         document.getElementById("zotero-itemmenu").addEventListener("popupshowing", function() {
 
-            var selectedItems = ZoteroPane_Local.getSelectedItems();
+            var selectedItems = ZoteroPane.getSelectedItems();
 
             /***********************************
              * visibility of zotlink item menu *
@@ -117,7 +117,7 @@ Zotero.ZotLink = {
 
     promptCreateLink: function() {
         // get selected items
-        var selectedItems = ZoteroPane_Local.getSelectedItems();
+        var selectedItems = ZoteroPane.getSelectedItems();
         // get destination library id and collection id
         var io = {};
         window.openDialog("chrome://zotlink/content/pickLinkDestination.xul",
@@ -171,7 +171,7 @@ Zotero.ZotLink = {
 
     promptLinkExisting: function() {
         // get selected items
-        var selectedItems = ZoteroPane_Local.getSelectedItems();
+        var selectedItems = ZoteroPane.getSelectedItems();
         // only allow single selection
         if (selectedItems.length > 1) {
             this.ps.alert(null,
@@ -264,7 +264,17 @@ Zotero.ZotLink = {
     },
 
     __dev__ : function() {
-        var io = {item: ZoteroPane_Local.getSelectedItems()[0]};
+        console.log(ZoteroPane.getSelectedItems());
+        console.log("notes" + Zotero.Items.get(ZoteroPane.getSelectedItems()[0].getNotes()));
+        var obj = ZoteroPane.getSelectedItems()[0].serialize();
+        console.log(obj);
+        var fields = obj.fields;
+        for (var field in fields) {
+            console.log(field);
+        }
+        console.log(obj.creators);
+
+        var io = {item: ZoteroPane.getSelectedItems()[0]};
         window.openDialog("chrome://zotlink/content/pickAttachmentsToCopy.xul",
                           "",
                           "chrome,centerscreen,modal,resizable=no",
@@ -281,7 +291,7 @@ Zotero.ZotLink = {
         }
 
         // do the actual job
-        var itemid = ZoteroPane_Local.getSelectedItems()[0].id;
+        var itemid = ZoteroPane.getSelectedItems()[0].id;
         this.unlinkItem(itemid);
     },
 

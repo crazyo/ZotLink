@@ -31,14 +31,14 @@
     <popupset>
         <tooltip id="zotlink-create-link-help" class="help-tooltip" orient="horizontal" noautohide="true" crop="end">
             <description>
-                Create a<description value="duplicate" style="color: red"/>of the current item in the selected "library > collection" and keep them<description value="synced" style="color: red"/>
+                Create a duplicate of the current item in the selected "library > collection" and keep them synced
             </description>
         </tooltip>
     </popupset>
     <popupset>
         <tooltip id="zotlink-link-existing-help" class="help-tooltip" orient="horizontal" noautohide="true" crop="end">
             <description>
-                <description value="Overwrites" style="color: red"/>the target item with the current item and keep them<description value="synced" style="color: red"/>
+                Overwrites the target item with the current item and keep them synced
             </description>
         </tooltip>
     </popupset>
