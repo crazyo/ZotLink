@@ -23,8 +23,7 @@
                 </row>
             </rows>
         </grid>
-        <menuitem id="zotlink-unlink" label="Remove All Links to the Current Item..." oncommand="Zotero.ZotLink.promptUnlink();"/>
-        <menuitem hidden="false" id="__dev__" label="__dev__" oncommand="Zotero.ZotLink.__dev__();"/>
+        <menuitem id="zotlink-manage-links" label="Manage Links to the Current Item..." oncommand="Zotero.ZotLink.promptManageLinks();"/>
     </vbox>
     </menupopup>
 

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        id="zotlink-manage-links-dialog"
+        title="Manage Links"
+        buttons="accept" buttonlabelaccept="Close"
+        onload="ZotLink_Manager.init();">
+
+    <script src="chrome://zotero/content/include.js"/>
+    <script src="manageLinks.js"/>
+
+    <vbox flex="1">
+        <groupbox>
+            <caption label="Item Info"/>
+            <grid>
+                <columns>
+                    <column/>
+                    <column/>
+                </columns>
+                <rows>
+                    <row>
+                        <label value="Name: "/>
+                        <label id="item-name"/>
+                    </row>
+                    <row>
+                        <label value="Type: "/>
+                        <label id="item-type"/>
+                    </row>
+                </rows>
+            </grid>
+        </groupbox>
+        <groupbox flex="1">
+            <caption label="Links"/>
+            <listbox id="links-pool" selType="single" flex="1">
+                <listhead>
+                    <listheader label="Item ID"/>
+                    <listheader label="Library"/>
+                </listhead>
+                <listcols>
+                    <listcol/>
+                    <listcol flex="1"/>
+                </listcols>
+            </listbox>
+        </groupbox>
+        <groupbox align="center">
+            <caption label="Actions"/>
+            <hbox align="center">
+                <!-- <button label="Modify Selected Link Fields" oncommand="ZotLink_Manager.modifyLink();"/> -->
+                <button label="Delete Selected Link" oncommand="ZotLink_Manager.deleteLink();"/>
+            </hbox>
+        </groupbox>
+    </vbox>
+</dialog>

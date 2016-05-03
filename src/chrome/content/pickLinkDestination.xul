@@ -11,15 +11,15 @@
     <script src="pickLinkDestination.js"/>
 
     <vbox>
-        <hbox>
+        <hbox flex="1" align="center">
             <label value="Library"/>
-            <menulist id="zotlink-destination-library-list-menu" oncommand="ZotLink_Destination_Picker.updateCollections();">
+            <menulist id="zotlink-destination-library-list-menu" oncommand="ZotLink_Destination_Picker.updateCollections();" flex="1">
                 <menupopup id="zotlink-destination-library-list"/>
             </menulist>
         </hbox>
-        <hbox>
+        <hbox flex="1" align="center">
             <label value="Collection"/>
-            <menulist id="zotlink-destination-collection-list-menu">
+            <menulist id="zotlink-destination-collection-list-menu" flex="1">
                 <menupopup id="zotlink-destination-collection-list"/>
             </menulist>
         </hbox>
