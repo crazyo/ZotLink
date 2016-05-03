@@ -61,6 +61,9 @@ Zotero.ZotLink = {
         // item-menu pop-up showing
         document.getElementById("zotero-itemmenu").addEventListener("popupshowing", function() {
 
+            // show ZotLink item menu first
+            document.getElementById("zotlink-itemmenu").hidden = false;
+
             var selectedItems = ZoteroPane.getSelectedItems();
 
             /***********************************

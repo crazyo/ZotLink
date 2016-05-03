@@ -5,7 +5,8 @@
 
     <!-- ZotLink context menu options -->
     <menupopup id="zotero-itemmenu">
-    <vbox id="zotlink-itemmenu">
+    <!-- hide ZotLink item menu initially to avoid dangerous operations when FireFox bugs -->
+    <vbox id="zotlink-itemmenu" hidden="true">
         <menuseparator id="zotlink-separator"/>
         <grid>
             <columns>
