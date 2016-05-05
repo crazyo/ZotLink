@@ -4,6 +4,10 @@ Zotero.ZotLink = {
     log: function(string) {
         if (this._DEBUG) console.log(string);
     },
+    __dev__logUsedFields: function() {
+        this.log(ZoteroPane.getSelectedItems()[0].getUsedFields(true));
+    },
+    //////////////////////////////////////////////
 
     DB: null,
     // cache database invoking result to reduce database-access overhead
@@ -63,6 +67,8 @@ Zotero.ZotLink = {
 
             // show ZotLink item menu first
             document.getElementById("zotlink-itemmenu").hidden = false;
+            // only show dev options in debug mode
+            if (Zotero.ZotLink._DEBUG) document.getElementById("zotlink-itemmenu-dev").hidden = false;
 
             var selectedItems = ZoteroPane.getSelectedItems();
 
@@ -76,9 +82,9 @@ Zotero.ZotLink = {
                 return;
             }
 
-            // do not display zotlink item menu if at least one of the selected items is attachment
+            // do not display zotlink item menu if at least one of the selected items is attachment/note
             for (var i = 0; i < selectedItems.length; i++) {
-                if (selectedItems[i].isAttachment()) {
+                if (selectedItems[i].isAttachment() || selectedItems[i].isNote()) {
                     document.getElementById("zotlink-itemmenu").hidden = true;
                     return;
                 }
@@ -87,8 +93,10 @@ Zotero.ZotLink = {
             /*****************
              * unlink option *
              *****************/
-            // remove this option if multiple items are selected
-            if (selectedItems.length > 1) {
+            // remove this option if multiple items are selected or the selected item is an attachment/note
+            if (selectedItems.length > 1 ||
+                selectedItems[0].isAttachment() ||
+                selectedItems[0].isNote()) {
                 document.getElementById("zotlink-manage-links").hidden = true;
             }
             else {

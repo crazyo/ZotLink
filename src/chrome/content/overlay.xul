@@ -26,6 +26,10 @@
         </grid>
         <menuitem id="zotlink-manage-links" label="Manage Links to the Current Item..." oncommand="Zotero.ZotLink.promptManageLinks();"/>
     </vbox>
+    <vbox id="zotlink-itemmenu-dev" hidden="true">
+        <menuseparator id="zotlink-separator-dev"/>
+        <menuitem label="log used fields" oncommand="Zotero.ZotLink.__dev__logUsedFields();"/>
+    </vbox>
     </menupopup>
 
     <popupset>

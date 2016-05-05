@@ -5,7 +5,8 @@
         id="zotlink-pick-destination-dialog"
         title="Pick Link Destination" buttons="cancel,accept"
         onload="ZotLink_Destination_Picker.init();"
-        ondialogaccept="ZotLink_Destination_Picker.accept();">
+        ondialogaccept="ZotLink_Destination_Picker.accept();"
+        width="500">
 
     <script src="chrome://zotero/content/include.js"/>
     <script src="pickLinkDestination.js"/>
