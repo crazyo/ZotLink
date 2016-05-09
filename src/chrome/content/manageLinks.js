@@ -24,11 +24,26 @@ var ZotLink_Manager = new function() {
         for (var i = 0; i < links.length; i++) {
             var linkItem = Zotero.Items.get(links[i]);
             var row = document.createElement("listitem");
+            // item id
             var cell = document.createElement("listcell");
             cell.setAttribute("label", links[i]);
             row.appendChild(cell);
+            // item title
+            cell = document.createElement("listcell");
+            cell.setAttribute("label", linkItem.getDisplayTitle());
+            row.appendChild(cell);
+            // library
             cell = document.createElement("listcell");
             cell.setAttribute("label", linkItem.libraryID ? Zotero.Libraries.getName(linkItem.libraryID) : "My Library");
+            row.appendChild(cell);
+            // collections
+            var collections = [];
+            var collectionids = linkItem.getCollections();
+            for (var j = 0; j < collectionids.length; j++) {
+                collections.push(Zotero.Collections.get(collectionids[j]).name);
+            }
+            cell = document.createElement("listcell");
+            cell.setAttribute("label", collections.toString());
             row.appendChild(cell);
             row.setAttribute("value", links[i]);
             pool.appendChild(row);

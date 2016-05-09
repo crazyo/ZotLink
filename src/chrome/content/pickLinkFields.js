@@ -48,17 +48,18 @@ var ZotLink_Fields_Picker = new function() {
             row.setAttribute("tooltiptext", Zotero.ItemFields.getLocalizedString(item.itemTypeID, field));
             row.setAttribute("value", fieldID);
             // some fields have to be synced
-            switch (field) {
-                case "title":
-                    row.setAttribute("disabled", true);
-                    break;
-            }
+            // switch (field) {
+            //     case "title":
+            //         row.setAttribute("disabled", true);
+            //         break;
+            // }
             this._fieldsPool.appendChild(row);
         }
         // additional fields
         var more = Zotero.ZotLink.additionalFields;
         for (field in more) {
-            if (!more.hasOwnProperty(field)) continue;
+            if (!more.hasOwnProperty(field) ||
+                more[field].applyTo.indexOf("regular") === -1) continue;
             row = document.createElement("listitem");
             row.setAttribute("type", "checkbox");
             row.setAttribute("checked", true);

@@ -32,14 +32,18 @@
         </groupbox>
         <groupbox flex="1">
             <caption label="Links"/>
-            <listbox id="links-pool" selType="single" flex="1">
+            <listbox id="links-pool" selType="single" width="500" flex="1">
                 <listhead>
                     <listheader label="Item ID"/>
+                    <listheader label="Item Title"/>
                     <listheader label="Library"/>
+                    <listheader label="Collections"/>
                 </listhead>
                 <listcols>
                     <listcol/>
+                    <listcol flex="2"/>
                     <listcol flex="1"/>
+                    <listcol flex="2"/>
                 </listcols>
             </listbox>
         </groupbox>
