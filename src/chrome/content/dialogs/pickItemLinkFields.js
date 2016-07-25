@@ -1,27 +1,27 @@
-var ZotLink_Fields_Picker = new function() {
+var ZotLink_Pick_Item_Link_Fields_Dialog = new function() {
 
     // public methods
     this.init = init;
     this.accept = accept;
 
-    this.selectAllFields = function() { toggleAllSelectStatus(this._fieldsPool, true) };
-    this.deselectAllFields = function() { toggleAllSelectStatus(this._fieldsPool, false) };
-    this.selectAllAttachments = function() { toggleAllSelectStatus(this._attachmentsPool, true) };
-    this.deselectAllAttachments = function() { toggleAllSelectStatus(this._attachmentsPool, false) };
-    this.selectAllNotes = function() { toggleAllSelectStatus(this._notesPool, true) };
-    this.deselectAllNotes = function() { toggleAllSelectStatus(this._notesPool, false) };
+    this.selectAllBasicFields = function() { _toggleAllSelectStatus(this._basicFieldsListbox, true) };
+    this.deselectAllBasicFields = function() { _toggleAllSelectStatus(this._basicFieldsListbox, false) };
+    this.selectAllAttachments = function() { _toggleAllSelectStatus(this._attachmentsListbox, true) };
+    this.deselectAllAttachments = function() { _toggleAllSelectStatus(this._attachmentsListbox, false) };
+    this.selectAllNotes = function() { _toggleAllSelectStatus(this._notesListbox, true) };
+    this.deselectAllNotes = function() { _toggleAllSelectStatus(this._notesListbox, false) };
 
     // private methods/properties
-    this._fieldsPool = null;
-    this._attachmentsPool = null;
-    this._notesPool = null;
+    this._basicFieldsListbox = null;
+    this._attachmentsListbox = null;
+    this._notesListbox = null;
 
 
     function init() {
 
-        this._fieldsPool = document.getElementById("fields-pool");
-        this._attachmentsPool = document.getElementById("attachments-pool");
-        this._notesPool = document.getElementById("notes-pool");
+        this._basicFieldsListbox = document.getElementById("basic-fields-listbox");
+        this._attachmentsListbox = document.getElementById("attachments-listbox");
+        this._notesListbox = document.getElementById("notes-listbox");
 
         // general local variables
         var i;
@@ -33,7 +33,7 @@ var ZotLink_Fields_Picker = new function() {
         document.getElementById("item-name").setAttribute("value", item.getDisplayTitle());
         document.getElementById("item-type").setAttribute("value", Zotero.ItemTypes.getName(item.itemTypeID));
 
-        // fill fields pool
+        // fill basic fields listbox
         // basic fields
         var fields = item.serialize().fields;
         for (field in fields) {
@@ -53,26 +53,32 @@ var ZotLink_Fields_Picker = new function() {
             //         row.setAttribute("disabled", true);
             //         break;
             // }
-            this._fieldsPool.appendChild(row);
+            this._basicFieldsListbox.appendChild(row);
         }
         // additional fields
-        var more = Zotero.ZotLink.additionalFields;
-        for (field in more) {
-            if (!more.hasOwnProperty(field) ||
-                more[field].applyTo.indexOf("regular") === -1) continue;
-            row = document.createElement("listitem");
-            row.setAttribute("type", "checkbox");
-            row.setAttribute("checked", true);
-            row.setAttribute("label", more[field].name);
-            row.setAttribute("tooltiptext", more[field].name);
-            row.setAttribute("value", more[field].id);
-            this._fieldsPool.appendChild(row);
-        }
+        // HARD_CODED:
+        //   keep in consistence with hardcode.js
+        //   1. Creators
+        row = document.createElement("listitem");
+        row.setAttribute("type", "checkbox");
+        row.setAttribute("checked", true);
+        row.setAttribute("label", "Creators");
+        row.setAttribute("tooltiptext", "Creators");
+        row.setAttribute("value", -1);
+        this._basicFieldsListbox.appendChild(row);
+        //   2. Tags
+        row = document.createElement("listitem");
+        row.setAttribute("type", "checkbox");
+        row.setAttribute("checked", true);
+        row.setAttribute("label", "Tags");
+        row.setAttribute("tooltiptext", "Tags");
+        row.setAttribute("value", -2);
+        this._basicFieldsListbox.appendChild(row);
 
-        // fill attachments pool
+        // fill attachments listbox
         var attachments = Zotero.Items.get(item.getAttachments());
         if (!attachments.length) {
-            this._attachmentsPool.disabled = true;
+            this._attachmentsListbox.disabled = true;
             document.getElementById("select-all-attachments-button").disabled = true;
             document.getElementById("deselect-all-attachments-button").disabled = true;
         }
@@ -86,14 +92,14 @@ var ZotLink_Fields_Picker = new function() {
                 row.setAttribute("tooltiptext", attachment.getDisplayTitle());
                 row.setAttribute("value", attachment.id);
                 row.setAttribute("disabled", attachment.attachmentLinkMode === Zotero.Attachments.LINK_MODE_LINKED_URL ? false : true);
-                this._attachmentsPool.appendChild(row);
+                this._attachmentsListbox.appendChild(row);
             }
         }
 
-        // fill notes pool
+        // fill notes listbox
         var notes = Zotero.Items.get(item.getNotes());
         if (!notes.length) {
-            this._notesPool.disabled = true;
+            this._notesListbox.disabled = true;
             document.getElementById("select-all-notes-button").disabled = true;
             document.getElementById("deselect-all-notes-button").disabled = true;
         }
@@ -106,31 +112,31 @@ var ZotLink_Fields_Picker = new function() {
                 row.setAttribute("label", note.getDisplayTitle());
                 row.setAttribute("tooltiptext", note.getDisplayTitle());
                 row.setAttribute("value", note.id);
-                this._notesPool.appendChild(row);
+                this._notesListbox.appendChild(row);
             }
         }
     }
 
     function accept() {
-        var selectedFields = [],
+        var selectedBasicFields = [],
             selectedAttachments = [],
             selectedNotes = [];
 
-        var allFields = this._fieldsPool.children;
-        for (var i = 0; i < allFields.length; i++) {
-            if (allFields[i].checked) {
-                selectedFields.push(allFields[i].value);
+        var allBasicFields = this._basicFieldsListbox.children;
+        for (var i = 0; i < allBasicFields.length; i++) {
+            if (allBasicFields[i].checked) {
+                selectedBasicFields.push(allBasicFields[i].value);
             }
         }
 
-        var allAttachments = this._attachmentsPool.children;
+        var allAttachments = this._attachmentsListbox.children;
         for (var i = 0; i < allAttachments.length; i++) {
             if (allAttachments[i].checked) {
                 selectedAttachments.push(allAttachments[i].value);
             }
         }
 
-        var allNotes = this._notesPool.children;
+        var allNotes = this._notesListbox.children;
         for (var i = 0; i < allNotes.length; i++) {
             if (allNotes[i].checked) {
                 selectedNotes.push(allNotes[i].value);
@@ -138,14 +144,14 @@ var ZotLink_Fields_Picker = new function() {
         }
 
         window.arguments[0].out = {
-            selectedFields: selectedFields,
+            selectedBasicFields: selectedBasicFields,
             selectedAttachments: selectedAttachments,
             selectedNotes: selectedNotes,
         };
     }
 
-    function toggleAllSelectStatus(pool, selected) {
-        var elements = pool.children;
+    function _toggleAllSelectStatus(listbox, selected) {
+        var elements = listbox.children;
         for (var i = 0; i < elements.length; i++) {
             if (!elements[i].disabled) elements[i].setAttribute("checked", selected);
         }

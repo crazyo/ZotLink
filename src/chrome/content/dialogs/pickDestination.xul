@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        id="zotlink-pick-destination-dialog"
+        title="Pick Destination" buttons="cancel,accept"
+        onload="ZotLink_Pick_Destination_Dialog.init();"
+        ondialogaccept="ZotLink_Pick_Destination_Dialog.accept();"
+        width="500">
+
+    <script src="chrome://zotero/content/include.js"/>
+    <script src="pickDestination.js"/>
+
+    <dialogheader id="header" title="Pick Link Destination"/>
+    <grid>
+        <columns>
+            <column/>
+            <column flex="1"/>
+        </columns>
+        <rows>
+            <row align="center">
+                <label value="Library"/>
+                <menulist id="destination-library-menulist" oncommand="ZotLink_Pick_Destination_Dialog.updateCollections();">
+                    <menupopup id="destination-library-menupopup"/>
+                </menulist>
+            </row>
+            <row align="center">
+                <label value="Collection"/>
+                <menulist id="destination-collection-menulist">
+                    <menupopup id="destination-collection-menupopup"/>
+                </menulist>
+            </row>
+        </rows>
+    </grid>
+</dialog>

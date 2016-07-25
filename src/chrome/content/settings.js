@@ -1,0 +1,4 @@
+var ZOTLINK_SETTINGS = {
+    DEBUG: true,
+    CURRENT_DB_VERSION: 1,
+};

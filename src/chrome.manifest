@@ -1,3 +1,4 @@
-content zotlink chrome/content/
+content     zotlink     chrome/content/
+resource    zotlink     resource/
 
-overlay chrome://zotero/content/zoteroPane.xul chrome://zotlink/content/overlay.xul
+overlay     chrome://zotero/content/zoteroPane.xul      chrome://zotlink/content/overlay.xul

@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<?xml-stylesheet href="chrome://zotlink/content/style.css" type="text/css"?>
+
+<!-- SEARCH FOR "PLACEHOLDER" -->
+
+<?xml-stylesheet href="chrome://zotlink/content/css/overlay.css" type="text/css"?>
 <overlay id="zotlink-overlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
@@ -7,7 +10,7 @@
     <menupopup id="zotero-itemmenu">
     <!-- hide ZotLink item menu initially to avoid dangerous operations when FireFox bugs -->
     <vbox id="zotlink-itemmenu" hidden="true">
-        <menuseparator id="zotlink-separator"/>
+        <menuseparator id="zotlink-itemmenu-separator"/>
         <grid>
             <columns>
                 <column/>
@@ -15,35 +18,39 @@
             </columns>
             <rows>
                 <row>
-                    <menuitem id="zotlink-create-link" label="Make a Linked Copy of the Current Item..." oncommand="Zotero.ZotLink.promptCreateLink();"/>
-                    <image class="question-icon help" tooltip="zotlink-create-link-help"/>
+                    <menuitem id="zotlink-create-linked-item" label="create linked item [PLACEHOLDER]" oncommand="Zotero.ZotLink.promptCreateLinkedItem();"/>
+                    <image class="question-icon help" tooltip="zotlink-create-linked-item-help"/>
                 </row>
                 <row>
-                    <menuitem id="zotlink-link-existing" label="Link Another Item to the Current Item..." oncommand="Zotero.ZotLink.promptLinkExisting();"/>
-                    <image class="question-icon help" tooltip="zotlink-link-existing-help"/>
+                    <menuitem id="zotlink-merge-link-existing-items" label="merge and link existing [PLACEHOLDER]" oncommand="Zotero.ZotLink.promptMergeLinkExistingItems();"/>
+                    <image class="question-icon help" tooltip="zotlink-merge-link-existing-items-help"/>
                 </row>
             </rows>
         </grid>
-        <menuitem id="zotlink-manage-links" label="Manage Links to the Current Item..." oncommand="Zotero.ZotLink.promptManageLinks();"/>
+        <menuitem id="zotlink-manage-item-links" label="manage item links [PLACEHOLDER]" oncommand="Zotero.ZotLink.promptManageItemLinks();"/>
     </vbox>
+
     <vbox id="zotlink-itemmenu-dev" hidden="true">
-        <menuseparator id="zotlink-separator-dev"/>
-        <menuitem label="log used fields" oncommand="Zotero.ZotLink.__dev__logUsedFields();"/>
+        <menuseparator id="zotlink-itemmenu-dev-separator"/>
+        <menuitem label="debug" oncommand="Zotero.ZotLink._debug();"/>
+    </vbox>
+    </menupopup>
+
+    <menupopup id="zotero-collectionmenu">
+    <vbox id="zotlink-collectionmenu" hidden="true">
+        <menuseparator id="zotlink-collectionmenu-separator"/>
+        <menuitem id="zotlink-create-linked-collection" label="create linked collection [PLACEHOLDER]" oncommand="Zotero.ZotLink.promptCreateLinkedCollection();"/>
     </vbox>
     </menupopup>
 
     <popupset>
-        <tooltip id="zotlink-create-link-help" class="help-tooltip" orient="horizontal" noautohide="true" crop="end">
-            <description>
-                Create a duplicate of the current item in the selected "library > collection" and keep them synced
-            </description>
+        <tooltip id="zotlink-create-linked-item-help" class="help-tooltip" orient="horizontal" noautohide="true" crop="end">
+            <description>PLACEHOLDER</description>
         </tooltip>
     </popupset>
     <popupset>
-        <tooltip id="zotlink-link-existing-help" class="help-tooltip" orient="horizontal" noautohide="true" crop="end">
-            <description>
-                Overwrites the target item with the current item and keep them synced
-            </description>
+        <tooltip id="zotlink-merge-link-existing-items-help" class="help-tooltip" orient="horizontal" noautohide="true" crop="end">
+            <description>PLACEHOLDER</description>
         </tooltip>
     </popupset>
 
@@ -51,4 +58,6 @@
     <script src="chrome://zotero/content/include.js"/>
     <!-- kick off our extension -->
     <script src="chrome://zotlink/content/include.js"/>
+
+    <script src="chrome://zotlink/content/overlay.js"/>
 </overlay>
