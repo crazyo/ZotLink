@@ -1,41 +1,16 @@
 Zotero.ZotLink = {
-    /*******
-     * dev *
-     *******/
-    _DEBUG: true,
-
-    log: function(string) {
-        if (this._DEBUG) console.log(string);
-    },
-    __dev__logUsedFields: function() {
-        this.log(ZoteroPane.getSelectedItems()[0].getUsedFields(true));
-    },
-    /********************************************/
-
-    /************
-     * database *
-     ************/
-    DB: null,
-    // cache database invoking result to reduce database-access overhead
-    links: null,
-    // additional fields
-    additionalFields: {
-        // start from -1 downwards so as not to conflict with regular field ids
-        Creators: {name: "Creators", id: -1, applyTo: ["regular"]},
-        Tags: {name: "Tags", id: -2, applyTo: ["regular", "attachment", "note"]},
-        Notes: {name: "Notes", id: -3, applyTo: ["attachment", "note"]},
-    },
-    /********************************************/
 
     /************
      * observer *
      ************/
     // types to observe
-    _typesToObserve: ["item", "tag"],
+    _typesToObserve: ["item", "tag", "collection", "collection-item"],
     // current observer id
     _observerID: null,
     // observer lock
     _observerLock: 1,
+    // lock (unregister) the observer before any action that may fire up an event
+    //   that is not user initiated
     lockobsvr: function() {
         if (this._observerLock) {
             this._observerLock--;
@@ -44,6 +19,7 @@ Zotero.ZotLink = {
         }
         return false;
     },
+    // unlock (register back) the observer after the above action is completed
     unlockobsvr: function(cert) {
         if (cert === true) {
             this._observerID = Zotero.Notifier.registerObserver(this.observer, this._typesToObserve);
@@ -51,106 +27,16 @@ Zotero.ZotLink = {
             return true;
         }
         if (cert === false) return true;
-        this.log("valid certificate must be given to unlock observer!");
+        log("valid certificate must be given to unlock observer!");
         return false;
     },
-    /********************************************/
+    // events object
+    _events: null,
 
-    /************
-     * services *
-     ************/
-    ps: Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-                  .getService(Components.interfaces.nsIPromptService),
-    /********************************************/
-
-
-    init: function() {
-        this.log("initializing...");
-
-        // connect to the database (create if necessary)
-        this.DB = new Zotero.DBConnection("zotlink");
-        // lock the database
-        // IMPORTANT: during runtime of the plugin, the database and the cache are always in sync thanks to this lock
-        if(!this._DEBUG) this.DB.query("PRAGMA locking_mode=EXCLUSIVE");
-        // create tables during first invoke
-        if (!this.DB.tableExists("links")) {
-            this.DB.query("CREATE TABLE links (id INTEGER PRIMARY KEY AUTOINCREMENT, item1id INT NOT NULL, item2id INT NOT NULL, UNIQUE (item1id, item2id));");
-        }
-        if (!this.DB.tableExists("linkFields")) {
-            this.DB.query("CREATE TABLE linkFields (linkid INT NOT NULL UNIQUE, fieldids BLOB NOT NULL, FOREIGN KEY (linkid) REFERENCES links(id));");
-        }
-
-        // retrieve link relationship from database, store in cache
-        var sql = "SELECT item1id, item2id FROM links;";
-        var rows = this.DB.query(sql);
-        this.links = new _LinkGraph(rows);
-
-        // start listening to events
-        this._observerID = Zotero.Notifier.registerObserver(this.observer, this._typesToObserve);
-        // stop listening to events when unloaded
-        window.addEventListener("unload", function() {
-            Zotero.Notifier.unregisterObserver(this._observerID);
-        });
-
-        // other event listeners
-
-        // item-menu pop-up showing
-        document.getElementById("zotero-itemmenu").addEventListener("popupshowing", function() {
-
-            // show ZotLink item menu first
-            document.getElementById("zotlink-itemmenu").hidden = false;
-            // only show dev options in debug mode
-            if (Zotero.ZotLink._DEBUG) document.getElementById("zotlink-itemmenu-dev").hidden = false;
-
-            var selectedItems = ZoteroPane.getSelectedItems();
-
-            /***********************************
-             * visibility of zotlink item menu *
-             ***********************************/
-            document.getElementById("zotlink-itemmenu").hidden = false;
-            // do not display zotlink item menu if no item is selected
-            if (selectedItems.length < 1) {
-                document.getElementById("zotlink-itemmenu").hidden = true;
-                return;
-            }
-
-            // do not display zotlink item menu if at least one of the selected items is attachment/note
-            for (var i = 0; i < selectedItems.length; i++) {
-                if (selectedItems[i].isAttachment() || selectedItems[i].isNote()) {
-                    document.getElementById("zotlink-itemmenu").hidden = true;
-                    return;
-                }
-            }
-
-            /*****************
-             * unlink option *
-             *****************/
-            // remove this option if multiple items are selected or the selected item is an attachment/note
-            if (selectedItems.length > 1 ||
-                selectedItems[0].isAttachment() ||
-                selectedItems[0].isNote()) {
-                document.getElementById("zotlink-manage-links").hidden = true;
-            }
-            else {
-                document.getElementById("zotlink-manage-links").hidden = false;
-                // gray out this option if the selected item is not linked to any other item
-                document.getElementById("zotlink-manage-links").setAttribute(
-                    "disabled",
-                    !Zotero.ZotLink.links.findLinks(selectedItems[0].id).length ? true : false
-                );
-            }
-
-            /******************************
-             * link existing items option *
-             ******************************/
-            // remove this option if multiple items are selected
-            document.getElementById("zotlink-link-existing").parentNode.hidden = selectedItems.length > 1 ? true : false;
-        });
-    },
-
+    // observer object (required by API)
     observer: {
         notify: function(event, type, ids, extra) {
-            var handler = new _Events();
+            var handler = Zotero.ZotLink._events;
             switch (type) {
                 case "item":
                     switch (event) {
@@ -169,19 +55,42 @@ Zotero.ZotLink = {
                             break;
                     }
                     break;
+                case "collection":
+                    switch (event) {
+                        case "modify":
+                            handler.onCollectionModification(ids);
+                            break;
+                    }
+                    break;
             }
         },
     },
+    /********************************************/
 
-    promptCreateLink: function() {
+    init: function() {
+        // establish db connection and initialize db
+        _load("chrome://zotlink/content/dbManager.js");
+        this.DBManager.initDB();
+
+        // // start listening to events
+        // this._observerID = Zotero.Notifier.registerObserver(this.observer, this._typesToObserve);
+        // // stop listening to events when unloaded
+        // window.addEventListener("unload", function() {
+        //     Zotero.Notifier.unregisterObserver(this._observerID);
+        // });
+        // // initialize events object
+        // this._events = new _Events(this);
+    },
+
+    // context menu option callbacks
+    /********************************************/
+
+    promptCreateLinkedItem: function() {
         // get selected items
         var selectedItems = ZoteroPane.getSelectedItems();
         // get destination library id and collection id
-        var io = {};
-        window.openDialog("chrome://zotlink/content/pickLinkDestination.xul",
-                          "",
-                          "chrome,centerscreen,modal,resizable",
-                          io);
+        var io = {linkType: "item"};
+        dialog("pickDestination", "chrome,centerscreen,modal,resizable", io);
         var result = io.out;
         // do nothing if user hit cancel
         if (!result || !result.accepted) {
@@ -189,164 +98,55 @@ Zotero.ZotLink = {
         }
         // do the actual job
         for (var i = 0; i < selectedItems.length; i++) {
-            this.createLink(selectedItems[i], result.destLibraryID, result.destCollectionID);
+            this._createLinkedItem(selectedItems[i], result.destLibraryID, result.destCollectionID);
         }
     },
 
-    createLink: function(source, destLibraryID, destCollectionID) {
-        // 1. pick fields to sync
-        var linkFields = this.pickLinkFields(source);
-        if (!linkFields ||
-            !linkFields.selectedFields ||
-            !linkFields.selectedAttachments ||
-            !linkFields.selectedNotes) return false;
+    // core functions
+    /********************************************/
 
-        // 2. create new item at the target location
-        var newItem = new Zotero.Item(source.itemTypeID);
-        // add the item to the target library
-        newItem.libraryID = destLibraryID || null;
-        var newItemID = newItem.save();
-        newItem = Zotero.Items.get(newItemID);
-        // add the item to the target collection
-        if (destCollectionID) {
-            Zotero.Collections.get(destCollectionID).addItem(newItemID);
-        }
+    // _createLinkedItem: function(source, destLibraryID, destCollectionID, linkFields) {
+    //     // 1. pick fields to sync if necessary
+    //     if (!linkFields) linkFields = this._pickItemLinkFields(source);
+    //     if (!linkFields ||
+    //         !linkFields.selectedFields ||
+    //         !linkFields.selectedAttachments ||
+    //         !linkFields.selectedNotes) return false;
 
-        // 3. initialize the link and sync link fields for the first time
-        if (this.initLink(source, newItem, linkFields) &&
-            this.syncLinkFields(source, newItem, linkFields.selectedFields)) {
-            return true;
-        }
-        return false;
-    },
+    //     var cert = this.lockobsvr();
+    //     var delayedEventIDs = [];
 
-    promptLinkExisting: function() {
-        // source item to link to (only one item can be selected)
-        var source = ZoteroPane.getSelectedItems()[0];
+    //     // 2. create new item at the target location
+    //     var newItem = new Zotero.Item(source.itemTypeID);
+    //     // add the item to the target library
+    //     newItem.libraryID = destLibraryID || null;
+    //     var newItemID = newItem.save();
+    //     newItem = Zotero.Items.get(newItemID);
+    //     // add the item to the target collection
+    //     if (destCollectionID) {
+    //         Zotero.Collections.get(destCollectionID).addItem(newItemID);
+    //         //EVENT
+    //         delayedEventIDs.push(this._events.enqueueDelayedEvent(this._events.onCollectionItemAddition, destCollectionID + "-" + newItemID));
+    //     }
 
-        // select target items
-        var io = {};
-        window.openDialog("chrome://zotero/content/selectItemsDialog.xul", "", "chrome,modal", io);
-        var targets = io.dataOut;
-        // do nothing if user hit cancel or didn't select any item
-        if (!targets || !targets.length) {
-            return;
-        }
-
-        // confirm
-        var confirmed = this.ps.confirm(null,
-                                        "Are You Sure You Want to Continue?",
-                                        "The selected target items will be overwritten by the source item.\n" +
-                                        "Make sure you already have important information backed-up!");
-        if (!confirmed) {
-            return;
-        }
-
-        // do the actual job
-        for (var i = 0; i < targets.length; i++) {
-            this.linkExisting(source, Zotero.Items.get(targets[i]));
-        }
-    },
-
-    linkExisting: function(source, target) {
-        // 1. check if linking is allowed
-        // i> target and source cannot be the same item
-        if (source.id === target.id) {
-            this.ps.alert(null,
-                          "Cannot Link Item to Itself",
-                          "Source item and target item cannot be the same item!\n" +
-                          "source: " + source.id + "; target: " + target.id);
-            return false;
-        }
-        // ii> target and source cannot already be linked
-        var existingLinks = this.links.findLinks(source.id);
-        if (existingLinks && existingLinks.length) {
-            for (var i = 0; i < existingLinks.length; i++) {
-                if (existingLinks[i] === target.id) {
-                    this.ps.alert(null,
-                                  "Cannot Link Already Linked Items",
-                                  "Source item and target item are already linked!\n" +
-                                  "source: " + source.id + "; target: " + target.id);
-                    return false;
-                }
-            }
-        }
-        // iii> target and source must be of the same item type
-        if (target.itemTypeID !== source.itemTypeID) {
-            this.ps.alert(null,
-                          "Cannot Link Different Types of Items",
-                          "Source item and target item must be of the same type!\n" +
-                          "source: " + source.id + "; target: " + target.id);
-            return false;
-        }
-
-        // 2. pick fields to sync
-        var linkFields = this.pickLinkFields(source);
-        if (!linkFields ||
-            !linkFields.selectedFields ||
-            !linkFields.selectedAttachments ||
-            !linkFields.selectedNotes) return false;
-
-        // 3. initialize the link and sync link fields for the first time
-        if (this.initLink(source, target, linkFields) &&
-            this.syncLinkFields(source, target, linkFields.selectedFields)) {
-            return true;
-        }
-        return false;
-    },
-
-    pickLinkFields: function(source) {
-        var io = {item: source};
-        window.openDialog("chrome://zotlink/content/pickLinkFields.xul",
-                          "",
-                          "chrome,centerscreen,modal,resizable",
-                          io);
-        return io.out;
-    },
-
-    syncLinks: function(source, visited) {
-        if (!visited) visited = [];
-
-        // source item has been visited by now
-        visited.push(source.id);
-
-        var targets = this.links.findLinks(source.id);
-        for (var i = 0; i < targets.length; i++) {
-            // target has already been visited
-            if (visited.indexOf(targets[i]) > -1) continue;
-
-            var target = Zotero.Items.get(targets[i]);
-
-            // the target item does not exist, purge database and cache
-            if (!target) {
-                this.DB.beginTransaction();
-                var sql = "DELETE FROM linkFields WHERE linkid IN (SELECT id FROM links WHERE item1id=? OR item2id=?);";
-                var params = [targets[i], targets[i]];
-                this.DB.query(sql, params);
-                sql = "DELETE FROM links WHERE item1id=? OR item2id=?;";
-                this.DB.query(sql, params);
-                this.DB.commitTransaction();
-                this.links.removeLinks(targets[i]);
-            }
-
-            // TODO: since now we can't know which fields were modified, we have to do an entire sync
-            // update the target
-            this.syncLinkFields(source, target);
-        }
-
-        // recursion
-        // why here? (why not in the above loop)
-        //   because we want it to be done in a BFS way (instead of DFS)
-        for (var i = 0; i < targets.length; i++) {
-            // target has already been visited
-            if (visited.indexOf(targets[i]) > -1) continue;
-
-            this.syncLinks(Zotero.Items.get(targets[i]), visited);
-        }
+    //     // 3. initialize the link and sync link fields for the first time
+    //     if (this.initLink(source, newItem, linkFields) &&
+    //         this.syncLinkFields(source, newItem, linkFields.selectedFields)) {
+    //         this._events.executeDelayedEvents(delayedEventIDs);
+    //         this.unlockobsvr(cert);
+    //         return true;
+    //     }
+    //     this._events.executeDelayedEvents(delayedEventIDs);
+    //     this.unlockobsvr(cert);
+    //     return false;
+    // },
+    _createLinkedItem: function(source) {
+        log(this._pickItemLinkFields(source));
     },
 
     syncLinkFields: function(source, target, fields) {
         var cert = this.lockobsvr();
+        var delayedEventIDs = [];
 
         // fields not provided, need to retrieve from database
         if (!fields) {
@@ -435,6 +235,7 @@ Zotero.ZotLink = {
         }
         target.save();
 
+        this._events.executeDelayedEvents(delayedEventIDs);
         this.unlockobsvr(cert);
         return true;
     },
@@ -446,6 +247,7 @@ Zotero.ZotLink = {
             !linkFields.selectedNotes) return false;
 
         var cert = this.lockobsvr();
+        var delayedEventIDs = [];
 
         // 1. basic fields
         // i. update database
@@ -473,6 +275,7 @@ Zotero.ZotLink = {
             this.ps.alert(null,
                           "Link Failed",
                           "Unexpected error occurred. Please try again.");
+            this._events.executeDelayedEvents(delayedEventIDs);
             this.unlockobsvr(cert);
             return false;
         }
@@ -519,201 +322,18 @@ Zotero.ZotLink = {
             this.links.addLink([notes[i].id, noteID]);
         }
 
+        this._events.executeDelayedEvents(delayedEventIDs);
         this.unlockobsvr(cert);
         return true;
     },
 
-    promptManageLinks: function() {
-        var source = ZoteroPane.getSelectedItems()[0];
+    // helper functions
+    /********************************************/
+
+    _pickItemLinkFields: function(source) {
         var io = {item: source};
-        window.openDialog("chrome://zotlink/content/manageLinks.xul",
-                          "",
-                          "chrome,centerscreen,resizable",
-                          io);
+        dialog("pickItemLinkFields", "chrome,centerscreen,modal,resizable", io);
+        return io.out;
     },
 
-    deleteLink: function(item1id, item2id) {
-        // update database
-        this.DB.beginTransaction();
-        var sql = "DELETE FROM linkFields WHERE linkid=(SELECT id FROM links WHERE (item1id=? AND item2id=?) OR (item1id=? AND item2id=?));";
-        var params = [item1id, item2id, item2id, item1id];
-        this.DB.query(sql, params);
-        sql = "DELETE FROM links WHERE (item1id=? AND item2id=?) OR (item1id=? AND item2id=?);";
-        this.DB.query(sql, params);
-        this.DB.commitTransaction();
-        // update cache
-        this.links.removeLink(item1id, item2id);
-
-        // also unlink their attachments and notes
-        var item1 = Zotero.Items.get(item1id),
-            item2 = Zotero.Items.get(item2id);
-        if (item1.isAttachment() || item1.isNote() || item2.isAttachment() || item2.isNote()) return;
-        // attachments
-        var item1attachments = item1.getAttachments(),
-            item2attachments = item2.getAttachments();
-        for (var i = 0; i < item1attachments.length; i++) {
-            for (var j = 0; j < item2attachments.length; j++) {
-                this.deleteLink(item1attachments[i], item2attachments[j]);
-            }
-        }
-        // notes
-        var item1notes = item1.getNotes(),
-            item2notes = item2.getNotes();
-        for (var i = 0; i < item1notes.length; i++) {
-            for (var j = 0; j < item2notes.length; j++) {
-                this.deleteLink(item1notes[i], item2notes[j]);
-            }
-        }
-    },
 };
-
-
-/* implementation of graph data structure where nodes are the items and
- * edges are the links
- */
-function _LinkGraph(pairs) {
-    // the graph inner representation of the linked items (will build later)
-    this.graph = {};
-
-    // connect linked pair in the graph
-    this.addLink = function(pair) {
-        var item1id = pair[0],
-            item2id = pair[1];
-
-        if (!this.graph.hasOwnProperty(item1id)) {
-            this.graph[item1id] = [parseInt(item2id)];
-        }
-        else {
-            this.graph[item1id].push(parseInt(item2id));
-        }
-        if (!this.graph.hasOwnProperty(item2id)) {
-            this.graph[item2id] = [parseInt(item1id)];
-        }
-        else {
-            this.graph[item2id].push(parseInt(item1id));
-        }
-    };
-
-    // // find id of all linked items to the given item using BFS
-    // this.findLinks = function(itemid) {
-    //     var tovisit = [itemid],
-    //         visted  = [];
-
-    //     while (tovisit.length) {
-    //         var current = tovisit.shift();
-    //         visted.push(current);
-
-    //         if (!this.graph[current]) {
-    //             continue;
-    //         }
-
-    //         for (var i = 0; i < this.graph[current].length; i++) {
-    //             var candidate = this.graph[current][i];
-    //             if (tovisit.indexOf(candidate) === -1 &&
-    //                 visted.indexOf(candidate)  === -1) {
-    //                 tovisit.push(candidate);
-    //             }
-    //         }
-    //     }
-
-    //     // the first item in the visited list is the given item itself
-    //     visted.shift();
-    //     return visted;
-    // };
-
-    this.findLinks = function(itemid) {
-        return this.graph[itemid] || [];
-    };
-
-    this.removeLink = function(item1id, item2id) {
-        if (this.graph[item1id] && this.graph[item1id].indexOf(item2id) > -1) {
-            this.graph[item1id].splice(this.graph[item1id].indexOf(item2id), 1);
-            if (!this.graph[item1id].length) delete this.graph[item1id];
-        }
-        if (this.graph[item2id] && this.graph[item2id].indexOf(item1id) > -1) {
-            this.graph[item2id].splice(this.graph[item2id].indexOf(item1id), 1);
-            if (!this.graph[item2id].length) delete this.graph[item2id];
-        }
-    };
-
-    // remove all links to the item
-    this.removeLinks = function(itemid) {
-        if (!this.graph[itemid]) {
-            return;
-        }
-
-        delete this.graph[itemid];
-        for (var source in this.graph) {
-            // skip if the current property is not an item
-            if (!this.graph.hasOwnProperty(source)) {
-                continue;
-            }
-
-            for (var j = 0; j < this.graph[source].length; j++) {
-                if (this.graph[source][j] === itemid) {
-                    this.graph[source].splice(j, 1);
-                    break;
-                }
-            }
-            // delete the list if it becomes empty
-            if (!this.graph[source].length) {
-                delete this.graph[source];
-            }
-        }
-    };
-
-    // build graph (as an adjacency list)
-    this._buildGraph = function(pairs) {
-        // connect all pairs that are linked and that is our graph
-        for (var i = 0; i < pairs.length; i++) {
-            this.addLink([pairs[i].item1id, pairs[i].item2id]);
-        }
-    };
-    this._buildGraph(pairs);
-}
-
-
-/* event handlers
- */
-function _Events() {
-    this.zotlink = Zotero.ZotLink;
-
-    this.onItemDeletion = function(ids) {
-        // update db
-        // TODO: error checking (rollbackTransaction)
-        this.zotlink.DB.beginTransaction();
-        var sql = "DELETE FROM linkFields WHERE linkid IN (SELECT id FROM links WHERE item1id IN (" + ids + ") OR item2id IN (" + ids + "));";
-        this.zotlink.DB.query(sql);
-        sql = "DELETE FROM links WHERE item1id IN (" + ids + ") OR item2id IN (" + ids + ");";
-        this.zotlink.DB.query(sql);
-        this.zotlink.DB.commitTransaction();
-        // also update the cache to reduce database access
-        for (var i = 0; i < ids.length; i++) {
-            // log event msg
-            this.zotlink.log("item " + ids[i] + " deleted!");
-            this.zotlink.links.removeLinks(ids[i]);
-        }
-    };
-
-    this.onItemModification = function(ids) {
-        // loop over changed items
-        for (var i = 0; i < ids.length; i++) {
-            // get the changed item
-            var id = ids[i];
-            var source = Zotero.Items.get(id);
-
-            // log event msg
-            this.zotlink.log("item " + id + " modified!");
-
-            // update all items that are linked to this item (directly and indirectly)
-            this.zotlink.syncLinks(source);
-        }
-    };
-
-    this.onTagModification = function(ids) {
-        for (var i = 0; i < ids.length; i++) {
-            var items = Zotero.Tags.getTagItems(ids[i]);
-            this.onItemModification(items);
-        }
-    };
-}
