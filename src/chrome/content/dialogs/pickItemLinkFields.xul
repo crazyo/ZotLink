@@ -10,7 +10,7 @@
     <script src="chrome://zotero/content/include.js"/>
     <script src="pickItemLinkFields.js"/>
 
-    <dialogheader title="Pick Item Link Fields" description="only selected fields will be synced"/>
+    <dialogheader title="Pick Link Fields" description="only selected fields will be synced"/>
     <vbox flex="1">
         <groupbox>
             <caption label="Current Item"/>

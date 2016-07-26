@@ -98,53 +98,113 @@ Zotero.ZotLink = {
         }
         // do the actual job
         for (var i = 0; i < selectedItems.length; i++) {
-            this._createLinkedItem(selectedItems[i], result.destLibraryID, result.destCollectionID);
+            this.createLinkedItem(selectedItems[i], result.destLibraryID, result.destCollectionID);
         }
     },
 
     // core functions
     /********************************************/
 
-    // _createLinkedItem: function(source, destLibraryID, destCollectionID, linkFields) {
-    //     // 1. pick fields to sync if necessary
-    //     if (!linkFields) linkFields = this._pickItemLinkFields(source);
-    //     if (!linkFields ||
-    //         !linkFields.selectedFields ||
-    //         !linkFields.selectedAttachments ||
-    //         !linkFields.selectedNotes) return false;
+    createLinkedItem: function(source, destLibraryID, destCollectionID, linkFields) {
+        // 1. pick fields to sync if necessary
+        if (!linkFields) linkFields = this._pickItemLinkFields(source);
+        if (!linkFields ||
+            !linkFields.selectedBasicFields ||
+            !linkFields.selectedAttachments ||
+            !linkFields.selectedNotes) return false;
 
-    //     var cert = this.lockobsvr();
-    //     var delayedEventIDs = [];
+        var cert = this.lockobsvr();
+        var delayedEventIDs = [];
 
-    //     // 2. create new item at the target location
-    //     var newItem = new Zotero.Item(source.itemTypeID);
-    //     // add the item to the target library
-    //     newItem.libraryID = destLibraryID || null;
-    //     var newItemID = newItem.save();
-    //     newItem = Zotero.Items.get(newItemID);
-    //     // add the item to the target collection
-    //     if (destCollectionID) {
-    //         Zotero.Collections.get(destCollectionID).addItem(newItemID);
-    //         //EVENT
-    //         delayedEventIDs.push(this._events.enqueueDelayedEvent(this._events.onCollectionItemAddition, destCollectionID + "-" + newItemID));
-    //     }
+        // 2. create new item at the target location
+        var newItem = new Zotero.Item(source.itemTypeID);
+        // add the item to the target library
+        newItem.libraryID = destLibraryID || null;
+        var newItemID = newItem.save();
+        newItem = Zotero.Items.get(newItemID);
+        // add the item to the target collection
+        if (destCollectionID) {
+            Zotero.Collections.get(destCollectionID).addItem(newItemID);
+            delayedEventIDs.push(this._events.enqueueDelayedEvent(this._events.onCollectionItemAddition, destCollectionID + "-" + newItemID));
+        }
 
-    //     // 3. initialize the link and sync link fields for the first time
-    //     if (this.initLink(source, newItem, linkFields) &&
-    //         this.syncLinkFields(source, newItem, linkFields.selectedFields)) {
-    //         this._events.executeDelayedEvents(delayedEventIDs);
-    //         this.unlockobsvr(cert);
-    //         return true;
-    //     }
-    //     this._events.executeDelayedEvents(delayedEventIDs);
-    //     this.unlockobsvr(cert);
-    //     return false;
-    // },
-    _createLinkedItem: function(source) {
-        log(this._pickItemLinkFields(source));
+        // 3. initialize the link and sync the two linked items for the first time
+        if (this.initItemLink(source, newItem, linkFields) &&
+            this.syncLinkedItems(source, newItem, linkFields.selectedBasicFields)) {
+            this._events.executeDelayedEvents(delayedEventIDs);
+            this.unlockobsvr(cert);
+            return true;
+        }
+        this._events.executeDelayedEvents(delayedEventIDs);
+        this.unlockobsvr(cert);
+        return false;
     },
 
-    syncLinkFields: function(source, target, fields) {
+    initItemLink: function(source, target, linkFields) {
+        if (!linkFields ||
+            !linkFields.selectedBasicFields ||
+            !linkFields.selectedAttachments ||
+            !linkFields.selectedNotes) return false;
+
+        var cert = this.lockobsvr();
+        var delayedEventIDs = [];
+
+        var sql, params;
+
+        // 1. basic fields
+        // i. update database
+        if (!this.dbManager.addItemLink(source.id, target.id, linkFields.selectedBasicFields)) {
+            alert("Link Failed", "Unexpected error occurred. Please try again.");
+            this._events.executeDelayedEvents(delayedEventIDs);
+            this.unlockobsvr(cert);
+            return false;
+        }
+
+        // 2. attachments
+        var attachments = Zotero.Items.get(linkFields.selectedAttachments);
+        for (var i = 0; i < attachments.length; i++) {
+            var attachment = new Zotero.Item("attachment");
+            attachment.libraryID = target.libraryID;
+            attachment.setSource(target.id);
+            attachment.attachmentLinkMode = attachments[i].attachmentLinkMode;
+            attachment.attachmentMIMEType = attachments[i].attachmentMIMEType;
+            attachment.attachmentCharset = attachments[i].attachmentCharset;
+            var attachmentID = attachment.save();
+            attachment = Zotero.Items.get(attachmentID);
+            this.syncLinkedItems(attachments[i], attachment);
+
+            // link these two attachment
+            sql = "INSERT INTO links (item1id, item2id) VALUES (?, ?);";
+            params = [attachments[i].id, attachmentID];
+            this.DB.query(sql, params);
+            // also update the cache
+            this.links.addLink([attachments[i].id, attachmentID]);
+        }
+
+        // 3. notes
+        var notes = Zotero.Items.get(linkFields.selectedNotes);
+        for (var i = 0; i < notes.length; i++) {
+            var note = new Zotero.Item("note");
+            note.libraryID = target.libraryID;
+            note.setSource(target.id);
+            var noteID = note.save();
+            note = Zotero.Items.get(noteID);
+            this.syncLinkedItems(notes[i], note);
+
+            // link these two note
+            sql = "INSERT INTO links (item1id, item2id) VALUES (?, ?);";
+            params = [notes[i].id, noteID];
+            this.DB.query(sql, params);
+            // also update the cache
+            this.links.addLink([notes[i].id, noteID]);
+        }
+
+        this._events.executeDelayedEvents(delayedEventIDs);
+        this.unlockobsvr(cert);
+        return true;
+    },
+
+    syncLinkedItems: function(source, target, fields) {
         var cert = this.lockobsvr();
         var delayedEventIDs = [];
 
@@ -240,92 +300,7 @@ Zotero.ZotLink = {
         return true;
     },
 
-    initLink: function(source, target, linkFields) {
-        if (!linkFields ||
-            !linkFields.selectedFields ||
-            !linkFields.selectedAttachments ||
-            !linkFields.selectedNotes) return false;
 
-        var cert = this.lockobsvr();
-        var delayedEventIDs = [];
-
-        // 1. basic fields
-        // i. update database
-        var sql, params;
-
-        this.DB.beginTransaction();
-
-        try {
-            // insert link relationship
-            sql = "INSERT INTO links (item1id, item2id) VALUES (?, ?);";
-            params = [source.id, target.id];
-            var linkid = this.DB.query(sql, params);
-
-            // insert link fields
-            sql = "INSERT INTO linkFields VALUES (?, ?);";
-            params = [linkid, linkFields.selectedFields.toString()];
-            this.DB.query(sql, params);
-
-            this.DB.commitTransaction();
-        }
-        catch (e) {
-            // TODO: take care of other things (e.g. delete the newly created item)
-            // this should never happen though
-            this.DB.rollbackTransaction();
-            this.ps.alert(null,
-                          "Link Failed",
-                          "Unexpected error occurred. Please try again.");
-            this._events.executeDelayedEvents(delayedEventIDs);
-            this.unlockobsvr(cert);
-            return false;
-        }
-
-        // ii. update cache
-        this.links.addLink([source.id, target.id]);
-
-        // 2. attachments
-        var attachments = Zotero.Items.get(linkFields.selectedAttachments);
-        for (var i = 0; i < attachments.length; i++) {
-            var attachment = new Zotero.Item("attachment");
-            attachment.libraryID = target.libraryID;
-            attachment.setSource(target.id);
-            attachment.attachmentLinkMode = attachments[i].attachmentLinkMode;
-            attachment.attachmentMIMEType = attachments[i].attachmentMIMEType;
-            attachment.attachmentCharset = attachments[i].attachmentCharset;
-            var attachmentID = attachment.save();
-            attachment = Zotero.Items.get(attachmentID);
-            this.syncLinkFields(attachments[i], attachment);
-
-            // link these two attachment
-            sql = "INSERT INTO links (item1id, item2id) VALUES (?, ?);";
-            params = [attachments[i].id, attachmentID];
-            this.DB.query(sql, params);
-            // also update the cache
-            this.links.addLink([attachments[i].id, attachmentID]);
-        }
-
-        // 3. notes
-        var notes = Zotero.Items.get(linkFields.selectedNotes);
-        for (var i = 0; i < notes.length; i++) {
-            var note = new Zotero.Item("note");
-            note.libraryID = target.libraryID;
-            note.setSource(target.id);
-            var noteID = note.save();
-            note = Zotero.Items.get(noteID);
-            this.syncLinkFields(notes[i], note);
-
-            // link these two note
-            sql = "INSERT INTO links (item1id, item2id) VALUES (?, ?);";
-            params = [notes[i].id, noteID];
-            this.DB.query(sql, params);
-            // also update the cache
-            this.links.addLink([notes[i].id, noteID]);
-        }
-
-        this._events.executeDelayedEvents(delayedEventIDs);
-        this.unlockobsvr(cert);
-        return true;
-    },
 
     // helper functions
     /********************************************/

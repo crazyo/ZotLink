@@ -118,8 +118,38 @@ Zotero.ZotLink.DBManager = {
         }
     },
 
-    // _LinkGraph API
+    // DBManager API for accessing database and _LinkGraph
     /********************************************/
+
+    // item
+
+    addItemLink: function(item1id, item2id, fieldids) {
+        // i. update database
+        var sql, params;
+
+        this.DB.beginTransaction();
+        try {
+            // insert link
+            sql = "INSERT INTO links (item1id, item2id) VALUES (?, ?);";
+            params = [item1id, item2id];
+            var linkid = this.performQuery("query", sql, params);
+
+            // insert link fields
+            sql = "INSERT INTO linkFields VALUES (?, ?);";
+            params = [linkid, fieldids.toString()];
+            this.performQuery("query", sql, params);
+
+            this.DB.commitTransaction();
+        }
+        catch (e) {
+            this.DB.rollbackTransaction();
+            return false;
+        }
+
+        // ii. update cache
+        this.CACHE.itemLinkGraph.addLink([item1id, item2id]);
+        return true;
+    },
 
     getItemLinks: function(itemid) {
         return this.CACHE.itemLinkGraph.getLinks(itemid);
@@ -128,39 +158,39 @@ Zotero.ZotLink.DBManager = {
 
 /************************************************/
 
-/* implementation of graph data structure where nodes are the items and
+/* implementation of graph data structure where nodes are the entries and
  * edges are the links
  */
 function _LinkGraph(pairs) {
-    // the graph inner representation of the linked items (will build later)
+    // the graph inner representation of the linked entries (will build later)
     this.graph = {};
 
     // connect linked pair in the graph
     this.addLink = function(pair) {
-        var item1id = pair[0],
-            item2id = pair[1];
+        var entry1id = pair[0],
+            entry2id = pair[1];
 
-        if (!this.graph.hasOwnProperty(item1id)) {
-            this.graph[item1id] = [parseInt(item2id)];
+        if (!this.graph.hasOwnProperty(entry1id)) {
+            this.graph[entry1id] = [parseInt(entry2id)];
         }
         else {
-            this.graph[item1id].push(parseInt(item2id));
+            this.graph[entry1id].push(parseInt(entry2id));
         }
-        if (!this.graph.hasOwnProperty(item2id)) {
-            this.graph[item2id] = [parseInt(item1id)];
+        if (!this.graph.hasOwnProperty(entry2id)) {
+            this.graph[entry2id] = [parseInt(entry1id)];
         }
         else {
-            this.graph[item2id].push(parseInt(item1id));
+            this.graph[entry2id].push(parseInt(entry1id));
         }
     };
 
-    this.getLinks = function(itemid) {
-        return this.graph[itemid] || [];
+    this.getLinks = function(entryid) {
+        return this.graph[entryid] || [];
     };
 
-    // find id of all relatives to the given item using BFS
-    this.getRelatives = function(itemid) {
-        var tovisit = [itemid],
+    // find id of all relatives to the given entry using BFS
+    this.getRelatives = function(entryid) {
+        var tovisit = [entryid],
             visted  = [];
 
         while (tovisit.length) {
@@ -180,37 +210,37 @@ function _LinkGraph(pairs) {
             }
         }
 
-        // the first item in the visited list is the given item itself
+        // the first entry in the visited list is the given entry itself
         visted.shift();
         return visted;
     };
 
-    this.removeLink = function(item1id, item2id) {
-        if (this.graph[item1id] && this.graph[item1id].indexOf(item2id) > -1) {
-            this.graph[item1id].splice(this.graph[item1id].indexOf(item2id), 1);
-            if (!this.graph[item1id].length) delete this.graph[item1id];
+    this.removeLink = function(entry1id, entry2id) {
+        if (this.graph[entry1id] && this.graph[entry1id].indexOf(entry2id) > -1) {
+            this.graph[entry1id].splice(this.graph[entry1id].indexOf(entry2id), 1);
+            if (!this.graph[entry1id].length) delete this.graph[entry1id];
         }
-        if (this.graph[item2id] && this.graph[item2id].indexOf(item1id) > -1) {
-            this.graph[item2id].splice(this.graph[item2id].indexOf(item1id), 1);
-            if (!this.graph[item2id].length) delete this.graph[item2id];
+        if (this.graph[entry2id] && this.graph[entry2id].indexOf(entry1id) > -1) {
+            this.graph[entry2id].splice(this.graph[entry2id].indexOf(entry1id), 1);
+            if (!this.graph[entry2id].length) delete this.graph[entry2id];
         }
     };
 
-    // remove all links to the item
-    this.removeLinks = function(itemid) {
-        if (!this.graph[itemid]) {
+    // remove all links to the entry
+    this.removeLinks = function(entryid) {
+        if (!this.graph[entryid]) {
             return;
         }
 
-        delete this.graph[itemid];
+        delete this.graph[entryid];
         for (var source in this.graph) {
-            // skip if the current property is not an item
+            // skip if the current property is not an entry
             if (!this.graph.hasOwnProperty(source)) {
                 continue;
             }
 
             for (var j = 0; j < this.graph[source].length; j++) {
-                if (this.graph[source][j] === itemid) {
+                if (this.graph[source][j] === entryid) {
                     this.graph[source].splice(j, 1);
                     break;
                 }

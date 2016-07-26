@@ -37,7 +37,7 @@
     ]]>
     </script>
 
-    <dialogheader title="Pick Collection Link Fields" description="choose information to be synced between the two collections"/>
+    <dialogheader title="Pick Link Fields" description="choose information to be synced between the two collections"/>
     <groupbox>
         <checkbox id="Name" class="out" label="Name"/>
     </groupbox>
