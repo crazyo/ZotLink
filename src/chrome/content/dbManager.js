@@ -130,8 +130,98 @@ Zotero.ZotLink.DBManager = {
         this.DB.beginTransaction();
         try {
             // insert link
-            sql = "INSERT INTO links (item1id, item2id) VALUES (?, ?);";
+            sql = "INSERT INTO links (entry1id, entry2id, type) VALUES (?, ?, 'item');";
             params = [item1id, item2id];
+            var linkid = this.performQuery("query", sql, params);
+
+            // insert link fields if provided
+            if (fieldids) {
+                sql = "INSERT INTO linkFields VALUES (?, ?);";
+                params = [linkid, fieldids.toString()];
+                this.performQuery("query", sql, params);
+            }
+
+            this.DB.commitTransaction();
+        }
+        catch (e) {
+            this.DB.rollbackTransaction();
+            log(e);
+            return false;
+        }
+
+        // ii. update cache
+        this.CACHE.itemLinkGraph.addLink([item1id, item2id]);
+        return true;
+    },
+
+    // get all links involving the item with the given id
+    getItemLinks: function(itemid) {
+        return this.CACHE.itemLinkGraph.getLinks(itemid);
+    },
+
+    // delete all links involving the item with the given id
+    deleteItemLinks: function(itemid) {
+        // 1. update database
+        var sql, params;
+        var operations = [];
+
+        // remove link fields info first
+        sql = "DELETE FROM linkFields WHERE linkid IN (SELECT id FROM links WHERE (entry1id=? AND type='item') OR (entry2id=? AND type='item'));";
+        params = [itemid, itemid];
+        operations.push(["query", sql, params]);
+
+        // remove the actual link
+        sql = "DELETE FROM links WHERE (entry1id=? AND type='item') OR (entry2id=? AND type='item');";
+        params = [itemid, itemid];
+        operations.push(["query", sql, params]);
+
+        if (!this.performTransaction(operations)) return false;
+
+        // 2. update cache
+        this.CACHE.itemLinkGraph.removeLinks(itemid);
+        return true;
+    },
+
+    // delete all links involving the items with the given ids
+    deleteItemsLinks: function(itemids) {
+        // 1. update database
+        var sql;
+        var operations = [];
+
+        // remove link fields info first
+        sql = "DELETE FROM linkFields WHERE linkid IN (SELECT id FROM links WHERE (entry1id IN (" + itemids + ") AND type='item') OR (entry2id IN (" + itemids + ") AND type='item'));";
+        operations.push(["query", sql]);
+
+        // remove the actual link
+        sql = "DELETE FROM links WHERE (entry1id IN (" + itemids + ") AND type='item') OR (entry2id IN (" + itemids + ") AND type='item');";
+        operations.push(["query", sql]);
+
+        if (!this.performTransaction(operations)) return false;
+
+        // 2. update cache
+        for (var i = 0; i < itemids.length; i++) {
+            this.CACHE.itemLinkGraph.removeLinks(itemids[i]);
+        }
+        return true;
+    },
+
+    getItemLinkFields: function(itemid1, itemid2) {
+        var sql = "SELECT fieldids FROM linkFields WHERE linkid=(SELECT id FROM links WHERE (entry1id=? AND entry2id=? AND type='item') OR (entry1id=? AND entry2id=? AND type='item'));";
+        var params = [itemid1, itemid2, itemid2, itemid1];
+        return this.performQuery("valueQuery", sql, params);
+    },
+
+    // collection
+
+    addCollectionLink: function(collection1id, collection2id, fieldids) {
+        // i. update database
+        var sql, params;
+
+        this.DB.beginTransaction();
+        try {
+            // insert link
+            sql = "INSERT INTO links (entry1id, entry2id, type) VALUES (?, ?, 'collection');";
+            params = [collection1id, collection2id];
             var linkid = this.performQuery("query", sql, params);
 
             // insert link fields
@@ -143,17 +233,15 @@ Zotero.ZotLink.DBManager = {
         }
         catch (e) {
             this.DB.rollbackTransaction();
+            log(e);
             return false;
         }
 
         // ii. update cache
-        this.CACHE.itemLinkGraph.addLink([item1id, item2id]);
+        this.CACHE.collectionLinkGraph.addLink([collection1id, collection2id]);
         return true;
     },
 
-    getItemLinks: function(itemid) {
-        return this.CACHE.itemLinkGraph.getLinks(itemid);
-    },
 };
 
 /************************************************/
