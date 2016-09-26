@@ -2,42 +2,47 @@
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 
 <dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-        id="zotlink-manage-links-dialog"
-        title="Manage Links"
+        id="zotlink-manage-collection-links-dialog"
+        title="Manage Collection Links"
         buttons="accept" buttonlabelaccept="Close"
-        onload="ZotLink_Manage_Links_Dialog.init();">
+        onload="ZotLink_Manage_Collection_Links_Dialog.init();">
 
     <script src="chrome://zotero/content/include.js"/>
-    <script src="manageLinks.js"/>
+    <script src="manageCollectionLinks.js"/>
 
     <vbox flex="1">
         <groupbox>
-            <caption label="Item Info"/>
+            <caption label="Current Collection Info"/>
             <grid>
                 <columns>
+                    <column/>
                     <column/>
                     <column/>
                 </columns>
                 <rows>
                     <row>
                         <label value="Name: "/>
-                        <label id="item-name"/>
+                        <label id="collection-name"/>
                     </row>
                     <row>
-                        <label value="Type: "/>
-                        <label id="item-type"/>
+                        <label value="Library: "/>
+                        <label id="collection-library"/>
+                    </row>
+                    <row>
+                        <label value="Parent Collection: "/>
+                        <label id="collection-parent"/>
                     </row>
                 </rows>
             </grid>
         </groupbox>
         <groupbox flex="1">
             <caption label="Links"/>
-            <listbox id="links-pool" selType="single" width="500" flex="1">
+            <listbox id="links-listbox" selType="single" width="500" flex="1">
                 <listhead>
-                    <listheader label="Item ID"/>
-                    <listheader label="Item Title"/>
+                    <listheader label="Collection ID"/>
+                    <listheader label="Collection Name"/>
                     <listheader label="Library"/>
-                    <listheader label="Collections"/>
+                    <listheader label="Parent Collection"/>
                 </listhead>
                 <listcols>
                     <listcol/>
@@ -50,8 +55,7 @@
         <groupbox align="center">
             <caption label="Actions"/>
             <hbox align="center">
-                <!-- <button label="Modify Selected Link Fields" oncommand="ZotLink_Manage_Links_Dialog.modifyLink();"/> -->
-                <button label="Delete Selected Link" oncommand="ZotLink_Manage_Links_Dialog.deleteLink();"/>
+                <button label="Unlink" oncommand="ZotLink_Manage_Collection_Links_Dialog.unlink();"/>
             </hbox>
         </groupbox>
     </vbox>

@@ -13,48 +13,40 @@ document.getElementById("zotero-itemmenu").addEventListener("popupshowing", func
     /***********************************
      * visibility of zotlink item menu *
      ***********************************/
-    // do not display zotlink item menu if no item is selected
-    if (selectedItems.length < 1) {
+    // do not display zotlink item menu if no item is selected or multiple items are selected
+    if (selectedItems.length !== 1) {
         document.getElementById("zotlink-itemmenu").hidden = true;
         return;
     }
 
-    // do not display zotlink item menu if at least one of the selected items is attachment/note
-    for (var i = 0; i < selectedItems.length; i++) {
-        if (selectedItems[i].isAttachment() || selectedItems[i].isNote()) {
-            document.getElementById("zotlink-itemmenu").hidden = true;
-            return;
-        }
+    var selectedItem = selectedItems[0];
+
+    // do not display zotlink item menu if the selected item is attachment/note
+    if (selectedItem.isAttachment() || selectedItem.isNote()) {
+        document.getElementById("zotlink-itemmenu").hidden = true;
+        return;
     }
 
     /****************************
      * manage item links option *
      ****************************/
-    // do not display this option if multiple items are selected or the selected item is an attachment/note
-    if (selectedItems.length > 1 ||
-        selectedItems[0].isAttachment() ||
-        selectedItems[0].isNote()) {
-        document.getElementById("zotlink-manage-item-links").hidden = true;
-    }
-    else {
-        document.getElementById("zotlink-manage-item-links").hidden = false;
-        // disable this option if the selected item is not linked to any other item
-        document.getElementById("zotlink-manage-item-links").setAttribute(
-            "disabled",
-            !Zotero.ZotLink.DBManager.getItemLinks(selectedItems[0].id).length ? true : false
-        );
-    }
-
-    /****************************************
-     * merge and link existing items option *
-     ****************************************/
-    // do not display this option if multiple items are selected
-    document.getElementById("zotlink-merge-link-existing-items").parentNode.hidden = selectedItems.length > 1 ? true : false;
+    // disable this option if the selected item is not linked to any other item
+    document.getElementById("zotlink-manage-item-links").setAttribute(
+        "disabled",
+        !Zotero.ZotLink.DBManager.getItemLinks(selectedItem.id).length ? true : false
+    );
 });
 
 // collection-menu pop-up showing
 document.getElementById("zotero-collectionmenu").addEventListener("popupshowing", function() {
     document.getElementById("zotlink-collectionmenu").hidden = ZoteroPane.getSelectedCollection() ? false : true;
+
+    document.getElementById("zotlink-manage-collection-links").setAttribute(
+        "disabled",
+        !Zotero.ZotLink.DBManager.getCollectionLinks(ZoteroPane.getSelectedCollection().id).length ? true : false
+    );
+    // only show dev options in debug mode
+    if (ZOTLINK_SETTINGS.DEBUG) document.getElementById("zotlink-collectionmenu-dev").hidden = false;
 });
 
 });

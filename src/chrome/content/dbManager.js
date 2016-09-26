@@ -159,6 +159,28 @@ Zotero.ZotLink.DBManager = {
         return this.CACHE.itemLinkGraph.getLinks(itemid);
     },
 
+    deleteItemLink: function(item1id, item2id) {
+        // 1. update database
+        var sql, params;
+        var operations = [];
+
+        // remove link fields info first
+        sql = "DELETE FROM linkFields WHERE linkid IN (SELECT id FROM links WHERE (entry1id=? AND entry2id=? AND type='item') OR (entry1id=? AND entry2id=? AND type='item'));";
+        params = [item1id, item2id, item2id, item1id];
+        operations.push(["query", sql, params]);
+
+        // remove the actual link
+        sql = "DELETE FROM links WHERE (entry1id=? AND entry2id=? AND type='item') OR (entry1id=? AND entry2id=? AND type='item');";
+        params = [item1id, item2id, item2id, item1id];
+        operations.push(["query", sql, params]);
+
+        if (!this.performTransaction(operations)) return false;
+
+        // 2. update cache
+        this.CACHE.itemLinkGraph.removeLink(item1id, item2id);
+        return true;
+    },
+
     // delete all links involving the item with the given id
     deleteItemLinks: function(itemid) {
         // 1. update database
@@ -240,6 +262,88 @@ Zotero.ZotLink.DBManager = {
         // ii. update cache
         this.CACHE.collectionLinkGraph.addLink([collection1id, collection2id]);
         return true;
+    },
+
+    // get all links involving the collection with the given id
+    getCollectionLinks: function(collectionid) {
+        return this.CACHE.collectionLinkGraph.getLinks(collectionid);
+    },
+
+    getCollectionRelatives: function(collectionid) {
+        return this.CACHE.collectionLinkGraph.getRelatives(collectionid);
+    },
+
+    deleteCollectionLink: function(collection1id, collection2id) {
+        // 1. update database
+        var sql, params;
+        var operations = [];
+
+        // remove link fields info first
+        sql = "DELETE FROM linkFields WHERE linkid IN (SELECT id FROM links WHERE (entry1id=? AND entry2id=? AND type='collection') OR (entry1id=? AND entry2id=? AND type='collection'));";
+        params = [collection1id, collection2id, collection2id, collection1id];
+        operations.push(["query", sql, params]);
+
+        // remove the actual link
+        sql = "DELETE FROM links WHERE (entry1id=? AND entry2id=? AND type='collection') OR (entry1id=? AND entry2id=? AND type='collection');";
+        params = [collection1id, collection2id, collection2id, collection1id];
+        operations.push(["query", sql, params]);
+
+        if (!this.performTransaction(operations)) return false;
+
+        // 2. update cache
+        this.CACHE.collectionLinkGraph.removeLink(collection1id, collection2id);
+        return true;
+    },
+
+    // delete all links involving the collection with the given id
+    deleteCollectionLinks: function(collectionid) {
+        // 1. update database
+        var sql, params;
+        var operations = [];
+
+        // remove link fields info first
+        sql = "DELETE FROM linkFields WHERE linkid IN (SELECT id FROM links WHERE (entry1id=? AND type='collection') OR (entry2id=? AND type='collection'));";
+        params = [collectionid, collectionid];
+        operations.push(["query", sql, params]);
+
+        // remove the actual link
+        sql = "DELETE FROM links WHERE (entry1id=? AND type='collection') OR (entry2id=? AND type='collection');";
+        params = [collectionid, collectionid];
+        operations.push(["query", sql, params]);
+
+        if (!this.performTransaction(operations)) return false;
+
+        // 2. update cache
+        this.CACHE.collectionLinkGraph.removeLinks(collectionid);
+        return true;
+    },
+
+    deleteCollectionsLinks: function(collectionids) {
+        // 1. update database
+        var sql;
+        var operations = [];
+
+        // remove link fields info first
+        sql = "DELETE FROM linkFields WHERE linkid IN (SELECT id FROM links WHERE (entry1id IN (" + collectionids + ") AND type='collection') OR (entry2id IN (" + collectionids + ") AND type='collection'));";
+        operations.push(["query", sql]);
+
+        // remove the actual link
+        sql = "DELETE FROM links WHERE (entry1id IN (" + collectionids + ") AND type='collection') OR (entry2id IN (" + collectionids + ") AND type='collection');";
+        operations.push(["query", sql]);
+
+        if (!this.performTransaction(operations)) return false;
+
+        // 2. update cache
+        for (var i = 0; i < collectionids.length; i++) {
+            this.CACHE.collectionLinkGraph.removeLinks(collectionids[i]);
+        }
+        return true;
+    },
+
+    getCollectionLinkFields: function(collectionid1, collectionid2) {
+        var sql = "SELECT fieldids FROM linkFields WHERE linkid=(SELECT id FROM links WHERE (entry1id=? AND entry2id=? AND type='collection') OR (entry1id=? AND entry2id=? AND type='collection'));";
+        var params = [collectionid1, collectionid2, collectionid2, collectionid1];
+        return this.performQuery("valueQuery", sql, params);
     },
 
 };

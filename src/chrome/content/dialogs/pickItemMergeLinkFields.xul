@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        title="Pick Item Merge/Link Fields" buttons="cancel,accept"
+        onload="ZotLink_Pick_Item_Merge_Link_Fields_Dialog.init();"
+        ondialogaccept="ZotLink_Pick_Item_Merge_Link_Fields_Dialog.accept();">
+
+    <script src="chrome://zotero/content/include.js"/>
+    <script src="pickItemMergeLinkFields.js"/>
+
+    <dialogheader title="Pick Merge/Link Fields" description="select fields to be merged/linked"/>
+    <hbox>
+        <vbox flex="1">
+            <groupbox>
+                <caption label="Item 1"/>
+                <grid>
+                    <columns>
+                        <column/> <column/> <column/> <column/>
+                    </columns>
+                    <rows>
+                        <row> <label value="Name: "/> <label id="item1-name"/> </row>
+                        <row> <label value="Type: "/> <label id="item1-type"/> </row>
+                        <row> <label value="Library: "/> <label id="item1-library"/> </row>
+                        <row> <label value="Collection: "/> <label id="item1-collection"/> </row>
+                    </rows>
+                </grid>
+            </groupbox>
+        </vbox>
+        <vbox flex="1">
+            <groupbox>
+                <caption label="Item 2"/>
+                <grid>
+                    <columns>
+                        <column/> <column/> <column/> <column/>
+                    </columns>
+                    <rows>
+                        <row> <label value="Name: "/> <label id="item2-name"/> </row>
+                        <row> <label value="Type: "/> <label id="item2-type"/> </row>
+                        <row> <label value="Library: "/> <label id="item2-library"/> </row>
+                        <row> <label value="Collection: "/> <label id="item2-collection"/> </row>
+                    </rows>
+                </grid>
+            </groupbox>
+        </vbox>
+    </hbox>
+    <tabbox flex="1">
+        <tabs>
+            <tab label="Basic Fields"/> <tab label="Attachments"/> <tab label="Notes"/>
+        </tabs>
+        <tabpanels flex="1">
+            <tabpanel>
+                <hbox flex="1">
+                    <groupbox flex="1">
+                        <listbox id="item1-basic-fields-listbox" flex="1" rows="10" width="500">
+                            <listhead>
+                                <listheader/> <listheader label="field" width="150"/> <listheader label="current value" width="150"/> <listheader label="merged value" width="150"/>
+                            </listhead>
+                            <listcols>
+                                <listcol/> <listcol flex="1"/> <listcol flex="2"/> <listcol flex="2"/>
+                            </listcols>
+                        </listbox>
+                        <hbox align="center">
+                            <button id="item1-select-all-basic-fields-button" class="select-all-button" label="Select All"/>
+                            <button id="item1-deselect-all-basic-fields-button" class="deselect-all-button" label="Deselect All"/>
+                        </hbox>
+                    </groupbox>
+                    <groupbox flex="1">
+                        <listbox id="item2-basic-fields-listbox" flex="1" rows="10" width="500">
+                            <listhead>
+                                <listheader/> <listheader label="field" width="150"/> <listheader label="current value" width="150"/> <listheader label="merged value" width="150"/>
+                            </listhead>
+                            <listcols>
+                                <listcol/> <listcol flex="1"/> <listcol flex="2"/> <listcol flex="2"/>
+                            </listcols>
+                        </listbox>
+                        <hbox align="center">
+                            <button id="item2-select-all-basic-fields-button" class="select-all-button" label="Select All"/>
+                            <button id="item2-deselect-all-basic-fields-button" class="deselect-all-button" label="Deselect All"/>
+                        </hbox>
+                    </groupbox>
+                </hbox>
+            </tabpanel>
+            <tabpanel>
+                <hbox flex="1">
+                    <groupbox flex="1">
+                        <listbox id="item1-attachments-listbox" flex="1"/>
+                        <hbox align="center">
+                            <button id="item1-select-all-attachments-button" class="select-all-button" label="Select All"/>
+                            <button id="item1-deselect-all-attachments-button" class="deselect-all-button" label="Deselect All"/>
+                        </hbox>
+                    </groupbox>
+                    <groupbox flex="1">
+                        <listbox id="item2-attachments-listbox" flex="1"/>
+                        <hbox align="center">
+                            <button id="item2-select-all-attachments-button" class="select-all-button" label="Select All"/>
+                            <button id="item2-deselect-all-attachments-button" class="deselect-all-button" label="Deselect All"/>
+                        </hbox>
+                    </groupbox>
+                </hbox>
+            </tabpanel>
+            <tabpanel>
+                <hbox flex="1">
+                    <groupbox flex="1">
+                        <listbox id="item1-notes-listbox" flex="1"/>
+                        <hbox align="center">
+                            <button id="item1-select-all-notes-button" class="select-all-button" label="Select All"/>
+                            <button id="item1-deselect-all-notes-button" class="deselect-all-button" label="Deselect All"/>
+                        </hbox>
+                    </groupbox>
+                    <groupbox flex="1">
+                        <listbox id="item2-notes-listbox" flex="1"/>
+                        <hbox align="center">
+                            <button id="item2-select-all-notes-button" class="select-all-button" label="Select All"/>
+                            <button id="item2-deselect-all-notes-button" class="deselect-all-button" label="Deselect All"/>
+                        </hbox>
+                    </groupbox>
+                </hbox>
+            </tabpanel>
+        </tabpanels>
+    </tabbox>
+</dialog>

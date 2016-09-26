@@ -32,7 +32,7 @@
 
     <vbox id="zotlink-itemmenu-dev" hidden="true">
         <menuseparator id="zotlink-itemmenu-dev-separator"/>
-        <menuitem label="debug" oncommand="Zotero.ZotLink._debug();"/>
+        <menuitem label="debug" oncommand="Zotero.ZotLink._debugItemMenu();"/>
     </vbox>
     </menupopup>
 
@@ -40,6 +40,12 @@
     <vbox id="zotlink-collectionmenu" hidden="true">
         <menuseparator id="zotlink-collectionmenu-separator"/>
         <menuitem id="zotlink-create-linked-collection" label="create linked collection [PLACEHOLDER]" oncommand="Zotero.ZotLink.promptCreateLinkedCollection();"/>
+        <menuitem id="zotlink-manage-collection-links" label="manage collection links [PLACEHOLDER]" oncommand="Zotero.ZotLink.promptManageCollectionLinks();"/>
+    </vbox>
+
+    <vbox id="zotlink-collectionmenu-dev" hidden="true">
+        <menuseparator id="zotlink-collectionmenu-dev-separator"/>
+        <menuitem label="debug" oncommand="Zotero.ZotLink._debugCollectionMenu();"/>
     </vbox>
     </menupopup>
 

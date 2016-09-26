@@ -78,12 +78,31 @@ var ZotLink_Pick_Destination_Dialog = new function() {
             var element = document.createElement("menuitem");
             var label = new Array(level).join("    ") + collection.name;
             element.setAttribute("label", label);
-            // when creating collection link
-            //   destination collection cannot be itself or its sub-collections
-            if (dialog._linkType === "collection" && collection.id === dialog._source.id) disabled = true;
+            if (dialog._linkType === "collection") {
+                // when creating collection link
+                //   destination collection cannot be:
+                //     itself, its sub-collections, its relatives or its relatives' sub-collections
+                var excludedCollectionIDs = Zotero.ZotLink.DBManager.getCollectionRelatives(dialog._source.id);
+                excludedCollectionIDs.push(dialog._source.id);
+                if (excludedCollectionIDs.indexOf(collectionid) > -1) disabled = true;
+            }
+            else if (dialog._linkType === "item") {
+                // when creating item link
+                //   destination collection cannot:
+                //     contain the current item or a linked item of the current item
+                var exclusiveItemIDs = Zotero.ZotLink.DBManager.getItemLinks(dialog._source.id);
+                exclusiveItemIDs.push(dialog._source.id);
+                disabled = false;
+                for (var i = 0; i < exclusiveItemIDs.length; i++) {
+                    if (Zotero.Items.get(exclusiveItemIDs[i]).inCollection(collectionid)) {
+                        disabled = true;
+                        break;
+                    }
+                }
+            }
             element.setAttribute("disabled", !!disabled);
             document.getElementById("destination-collection-menupopup").appendChild(element);
-            dialog._collectionSelections.push(collection.id);
+            dialog._collectionSelections.push(collectionid);
             // add its sub-collections
             var sub = collection.getChildCollections(true);
             for (var i = 0; i < sub.length; i++) {

@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        id="zotlink-manage-item-links-dialog"
+        title="Manage Item Links"
+        buttons="accept" buttonlabelaccept="Close"
+        onload="ZotLink_Manage_Item_Links_Dialog.init();">
+
+    <script src="chrome://zotero/content/include.js"/>
+    <script src="manageItemLinks.js"/>
+
+    <vbox flex="1">
+        <groupbox>
+            <caption label="Current Item Info"/>
+            <grid>
+                <columns>
+                    <column/>
+                    <column/>
+                </columns>
+                <rows>
+                    <row>
+                        <label value="Name: "/>
+                        <label id="item-name"/>
+                    </row>
+                    <row>
+                        <label value="Type: "/>
+                        <label id="item-type"/>
+                    </row>
+                </rows>
+            </grid>
+        </groupbox>
+        <groupbox flex="1">
+            <caption label="Links"/>
+            <listbox id="links-listbox" selType="single" width="500" flex="1">
+                <listhead>
+                    <listheader label="Item ID"/>
+                    <listheader label="Item Title"/>
+                    <listheader label="Library"/>
+                    <listheader label="Collections"/>
+                </listhead>
+                <listcols>
+                    <listcol/>
+                    <listcol flex="2"/>
+                    <listcol flex="1"/>
+                    <listcol flex="2"/>
+                </listcols>
+            </listbox>
+        </groupbox>
+        <groupbox align="center">
+            <caption label="Actions"/>
+            <hbox align="center">
+                <button label="Unlink" oncommand="ZotLink_Manage_Item_Links_Dialog.unlink();"/>
+            </hbox>
+        </groupbox>
+    </vbox>
+</dialog>

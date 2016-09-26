@@ -31,30 +31,30 @@
             var options = document.getElementsByClassName("out");
             for (var i = 0; i < options.length; i++) {
                 var option = options[i];
-                if (option.checked) io.out.fieldids.push(parseInt(option.value));
+                if (option.checked) io.out.fieldids.push(parseInt(option.getAttribute("data-fieldid")));
             }
         }
     ]]>
     </script>
 
     <!-- HARD_CODED:
-      //   the value of each 'out' checkbox is the id of that field
+      //   the data-fieldid attribute of each 'out' checkbox is the id of that collection link field
       //   must keep in consistence with hardcode.js
       -->
     <dialogheader title="Pick Link Fields" description="choose information to be synced between the two collections"/>
     <groupbox>
-        <checkbox id="Name" class="out" label="Name" value="1"/>
+        <checkbox id="Name" class="out" label="Name" data-fieldid="1"/>
     </groupbox>
     <groupbox>
-        <checkbox id="Items" class="out" label="Items" value="2"/>
+        <checkbox id="Items" class="out" label="Items" data-fieldid="2"/>
         <groupbox id="item-options">
-            <checkbox id="ItemInfo" class="out" label="Info" value="3"/>
-            <checkbox id="ItemTags" class="out" label="Tags" value="4"/>
-            <checkbox id="ItemAttachments" class="out" label="Attachments" value="5"/>
-            <checkbox id="ItemNotes" class="out" label="Notes" value="6"/>
+            <checkbox id="ItemInfo" class="out" label="Info" data-fieldid="3"/>
+            <checkbox id="ItemTags" class="out" label="Tags" data-fieldid="4"/>
+            <checkbox id="ItemAttachments" class="out" label="Attachments" data-fieldid="5"/>
+            <checkbox id="ItemNotes" class="out" label="Notes" data-fieldid="6"/>
         </groupbox>
     </groupbox>
     <groupbox>
-        <checkbox id="Subcollections" class="out" label="Subcollections" value="7"/>
+        <checkbox id="Subcollections" class="out" label="Subcollections" data-fieldid="7"/>
     </groupbox>
 </dialog>
